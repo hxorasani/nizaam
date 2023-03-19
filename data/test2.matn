@@ -1,0 +1,25 @@
+ºº
+
+
+¿£À ¼ £¡
+matn kaatib              byorg
+added scroll bar
+scroll to cursor
+page up/down without moving the cursor               ygy
+also added three styles & two kinds of selection:
+¿±£¶Æ¾, £¨£, ±¶­
+
+this is just a test to see how well kaatib performs with scrolling, it just needs to have
+a lot of matn ¿£À to deal with to make sure that it can actually handle it
+± ¾¼ ¿ ¾¼ ¡ ¾¼ ¡ ²¼­
+ ±Âª  ¡Æµ  ´º­  ¨¿­
+i just wanted to see if these new features will be easy to implement or not
+if they are easy, then we'll try to include them in the todo list
+
+the same features were implemented before in the nodejs version of nizaam but
+now we're doing things differently, inshallah this time they'll be way better
+
+see it tear you up and it calls your bluff, when the lie that keeps you warm
+is the truth you're fighting for
+
+up in the clouds, tell me sister are you coming down

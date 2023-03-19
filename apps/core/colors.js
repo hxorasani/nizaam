@@ -1,0 +1,13 @@
+var c_white = [1, 1, 1],
+	c_dwhite = [.75, .75, .75],
+	c_lsilver = [.5, .5, .5],
+	c_silver = [.4, .4, .4],
+	c_dsilver = [.3, .3, .3],
+	c_lgray = [.25, .25, .25],
+	c_gray = [.2, .2, .2],
+	c_dgray = [.1, .1, .1],
+	c_green = [.1, 1, .1],
+	c_lyellow = [.6, .6, .2],
+	c_blue = [.1, .1, 1],
+	c_red = [1, .1, .1],
+	c_black = [0, 0, 0];
