@@ -1,15 +1,13 @@
-#ifndef _SHADER_H
-#define _SHADER_H
+#ifndef _shader_h
+#define _shader_h
 #include <GL/glew.h>
 
 extern char* file_read(const char* filename);
 extern void print_log(GLuint object);
 extern GLuint create_shader(const char* filename, GLenum type);
 
-/**
- * Store all the file's contents in memory, useful to pass shaders
- * source code to OpenGL.  Using SDL_RWops for Android asset support.
- */
+// Store all the file's contents in memory, useful to pass shaders
+// source code to OpenGL.  Using SDL_RWops for Android asset support.
 char* file_read(const char* filename) {
 	SDL_RWops *rw = SDL_RWFromFile(filename, "rb");
 	if (rw == NULL) return NULL;
@@ -33,9 +31,7 @@ char* file_read(const char* filename) {
 	res[nb_read_total] = '\0';
 	return res;
 }
-/**
- * Display compilation errors from the OpenGL shader compiler
- */
+// Display compilation errors from the OpenGL shader compiler
 void print_log(GLuint object) {
 	GLint log_length = 0;
 	if (glIsShader(object)) {
@@ -57,9 +53,7 @@ void print_log(GLuint object) {
 	printf("%s\n", log);
 	free(log);
 }
-/**
- * Compile the shader from file 'filename', with error handling
- */
+// Compile the shader from file 'filename', with error handling
 GLuint create_shader(const char* filename, GLenum type) {
 	const GLchar* source = file_read(filename);
 	if (source == NULL) {

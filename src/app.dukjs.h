@@ -17,7 +17,6 @@
 
 #include "amr.h"
 #include "matn.h"
-#include "kaatib.h"
 #include "alwaan.h"
 #include "duktape.h"
 
@@ -25,9 +24,6 @@
 #include <sys/wait.h>	// waitpid
 
 #include "composer.h"
-
-#include "physics.h"
-#include "3d.h"
 
 void on_reload();
 void load_js_file(char *path);

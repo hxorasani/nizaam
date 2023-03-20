@@ -5,6 +5,7 @@
  * */
 #include "app.dukjs.h"
 #include "sdl.h"
+#include "sgl.h"
 #define XATAA 0
 
 duk_context *J;
@@ -407,400 +408,6 @@ void composer_canvas_translate(duk_context *J) {
 }
 //}
 
-//{ kaatib
-duk_ret_t composer_kaatib_tool(duk_context *J) { // total huroof in kaatib
-	duk_push_number(J, ktb.length);
-	return 1;
-}
-duk_ret_t composer_kaatib_harf(duk_context *J) { // get harf details
-	int i = duk_to_number(J, 0);
-	if (i < ktb.length && ktb.barzax) {
-		harf *h = &ktb.barzax[i];
-		duk_idx_t obj_idx = duk_push_object(J);
-		{
-			duk_push_number(J, h->id), duk_put_prop_string(J, obj_idx, "id");
-			duk_push_number(J, h->ihth.x), duk_put_prop_string(J, obj_idx, "x");
-			duk_push_number(J, h->ihth.y), duk_put_prop_string(J, obj_idx, "y");
-			duk_push_number(J, h->ihth.w), duk_put_prop_string(J, obj_idx, "w");
-			duk_push_number(J, h->ihth.h), duk_put_prop_string(J, obj_idx, "h");
-			duk_push_number(J, h->aqil.x), duk_put_prop_string(J, obj_idx, "ax");
-			duk_push_number(J, h->aqil.y), duk_put_prop_string(J, obj_idx, "ay");
-			duk_push_number(J, h->aqil.w), duk_put_prop_string(J, obj_idx, "aw");
-			duk_push_number(J, h->aqil.h), duk_put_prop_string(J, obj_idx, "ah");
-			duk_push_number(J, h->ltr), duk_put_prop_string(J, obj_idx, "ltr");
-			duk_push_number(J, h->muntaxab), duk_put_prop_string(J, obj_idx, "muntaxab");
-			duk_push_number(J, kaatib_zaahir(&ktb, h)), duk_put_prop_string(J, obj_idx, "zaahir");
-		}
-		return 1;
-	} else return 0;
-}
-void composer_kaatib_axav(duk_context *J) { // get a new kaatib
-	
-}
-void composer_kaatib_iftah(duk_context *J) { // open
-	const char *str = duk_safe_to_string(J, 0);
-
-	malaf mlf;
-	malaf_init(&mlf, (char *) str);
-	matn_nazaf(&ktb.mtn);
-	malaf_ilaa_matn(&mlf, &ktb.mtn.barzax, &ktb.mtn.length);
-	kaatib_init(&ktb); // will do matn -> huroof
-	malaf_destroy(&mlf);
-}
-void composer_kaatib_save(duk_context *J) { // save
-	const char *str = duk_safe_to_string(J, 0);
-
-	matn_nazaf(&ktb.mtn);
-	kaatib_ilaa_matn(&ktb);
-	malaf mlf;
-	mlf.length = ktb.mtn.length;
-	mlf.barzax = (u_char *) ktb.mtn.barzax;
-	malaf_hfiz(&mlf, (char *) str);
-
-}
-void composer_kaatib_ihsab(duk_context *J) { // calc bounds of all huroof
-	kaatib_huroof(&ktb);
-}
-duk_ret_t composer_kaatib_hajm(duk_context *J) { // get/set bounds
-	duk_idx_t n = duk_get_top(J);
-	float	x = n > 0 ? duk_to_number(J, 0) : 0,
-			y = n > 1 ? duk_to_number(J, 1) : 0,
-			w = n > 2 ? duk_to_number(J, 2) : 0,
-			h = n > 3 ? duk_to_number(J, 3) : 0;
-
-	if (n == 0) {
-		duk_idx_t obj_idx = duk_push_object(J);
-		{
-			duk_push_number(J, ktb.g.x), duk_put_prop_string(J, obj_idx, "x");
-			duk_push_number(J, ktb.g.y), duk_put_prop_string(J, obj_idx, "y");
-			duk_push_number(J, ktb.g.w), duk_put_prop_string(J, obj_idx, "w");
-			duk_push_number(J, ktb.g.h), duk_put_prop_string(J, obj_idx, "h");
-		}
-		return 1;
-	} else {
-		ktb.g.x = x; ktb.g.y = y;
-		ktb.g.w = w; ktb.g.h = h;
-		
-		kaatib_xataa(&ktb);
-
-		return 0;
-	}
-}
-void composer_kaatib_mu3aaq(duk_context *J) { // disabled
-	ktb.mu3aaq = duk_to_number(J, 0);
-}
-void composer_kaatib_taht(duk_context *J) { // ???
-	ktb.taht = duk_to_number(J, 0);
-}
-duk_ret_t composer_kaatib_qadd(duk_context *J) { // xat size
-	duk_idx_t n = duk_get_top(J);
-	float q = n ? duk_to_number(J, 0) : 0;
-	if (n == 0) {
-		duk_push_number(J, ktb.g.s);
-		return 1;
-	} else {
-		kaatib_qadd( &ktb, q );
-		return 0;
-	}
-}
-void composer_kaatib_makaan(duk_context *J) { // scrolling offsets
-	ktb.n.x = duk_to_number(J, 0);
-	ktb.n.y = duk_to_number(J, 1);
-}
-void composer_kaatib_idhan(duk_context *J) { // draw
-	int ikraah = duk_to_number(J, 0);
-	
-	char ikraah2 = 0;
-
-	if (ikraah == 0) ikraah2 = 0;
-	if (ikraah == 1) ikraah2 = 1;
-	if (ikraah == 2) ikraah2 = 2;
-
-	composer_kaatib_paint(ikraah2);
-}
-void composer_kaatib_tasteer(duk_context *J) { // draw
-	const char *str = duk_safe_to_string(J, 0);
-
-//	if (ayyi == MUSHEER) kaatib_tasteer(&ktb, &WJHH.mshr .mtrx, (u_char *) str);
-//	if (ayyi == RAEES  ) kaatib_tasteer(&ktb, &WJHH.raees.mtrx, (u_char *) str);
-}
-duk_ret_t composer_kaatib_muntahaa(duk_context *J) { // scroll offsets & bounds
-	duk_idx_t obj_idx = duk_push_object(J);
-	{
-		duk_push_number(J, ktb.n.x), duk_put_prop_string(J, obj_idx, "x");
-		duk_push_number(J, ktb.n.y), duk_put_prop_string(J, obj_idx, "y");
-		duk_push_number(J, ktb.muntahaa.w), duk_put_prop_string(J, obj_idx, "w");
-		duk_push_number(J, ktb.muntahaa.h), duk_put_prop_string(J, obj_idx, "h");
-	}
-	return 1;
-}
-duk_ret_t composer_kaatib_muashshar(duk_context *J) { // cursor
-	int i = duk_to_number(J, 0);
-	
-	if (i >= -1 && i < ktb.length) ktb.cursor = i;
-	
-	duk_push_number(J, ktb.cursor);
-	return 1;
-}
-duk_ret_t composer_kaatib_muashshar_zaahir(duk_context *J) { // cursor
-	int i = duk_to_number(J, 0);
-	
-	if (i == 0 || i == 1) ktb.showcursor = i;
-	
-	duk_push_number(J, ktb.showcursor);
-	return 1;
-}
-duk_ret_t composer_kaatib_mutaharrikah(duk_context *J) { // animate scrolling
-	int i = duk_to_number(J, 0);
-	
-	if (i == 0 || i == 1) ktb.n.c = i;
-	
-	duk_push_number(J, ktb.n.c);
-	return 1;
-}
-duk_ret_t composer_kaatib_cu3aa3(duk_context *J) { // raycast
-	int		x = duk_to_number(J, 0),
-			y = duk_to_number(J, 1);
-
-	harf *h = kaatib_cu3aa3(&ktb, x, y);
-
-	if (h) {
-		duk_idx_t obj_idx = duk_push_object(J);
-		{
-			duk_push_number(J, h->id), duk_put_prop_string(J, obj_idx, "id");
-			duk_push_number(J, h->ihth.x), duk_put_prop_string(J, obj_idx, "x");
-			duk_push_number(J, h->ihth.y), duk_put_prop_string(J, obj_idx, "y");
-			duk_push_number(J, h->ihth.w), duk_put_prop_string(J, obj_idx, "w");
-			duk_push_number(J, h->ihth.h), duk_put_prop_string(J, obj_idx, "h");
-			duk_push_number(J, h->ltr), duk_put_prop_string(J, obj_idx, "ltr");
-			duk_push_number(J, h->muntaxab), duk_put_prop_string(J, obj_idx, "muntaxab");
-			duk_push_number(J, kaatib_zaahir(&ktb, h)), duk_put_prop_string(J, obj_idx, "zaahir");
-		}
-		return 1;
-	} else return 0;
-}
-//}
-
-//{ physics
-int physics_debug = 1;
-TPE_Vec3 campos = {0, 0, 0};
-TPE_Vec3 camrot = {0, 0, 0};
-TPE_Vec3 camview = {0, 0, 0}; // x y res, z focal (0 = ortho)
-float camfactorx = 1;
-float camfactory = 1;
-int gridres = 16, gridsize = 256;
-
-duk_ret_t composer_physics_bodies	(duk_context *J) {
-	duk_push_number(J, physics_bodies());
-	return 1;
-}
-duk_ret_t composer_physics_joints	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int j = n > 0 ? duk_to_number(J, 0) : -1;
-	if (j > -1 && j < tpe_world.bodyCount) {
-		int k = n > 1 ? duk_to_number(J, 1) : -1;
-		if (k > -1 && k < tpe_world.bodies[j].jointCount) {
-			TPE_Joint joint = tpe_world.bodies[j].joints[k];
-			TPE_Vec3 pos = joint.position;
-			nuqtahf nq = { 0 };
-			physics_topx(pos, &nq);
-
-			duk_idx_t obj_idx = duk_push_object(J);
-			{
-				duk_push_number(J, nq.x), duk_put_prop_string(J, obj_idx, "x");
-				duk_push_number(J, nq.y), duk_put_prop_string(J, obj_idx, "y");
-				duk_push_number(J, joint.sizeDivided * 3), duk_put_prop_string(J, obj_idx, "s");
-			}
-		} else {
-			duk_push_number(J, tpe_world.bodies[j].jointCount);
-		}
-		return 1;
-	} else return 0;
-}
-duk_ret_t composer_physics_connects	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int j = n > 0 ? duk_to_number(J, 0) : -1;
-	TPE_Body *body = physics_get(j);
-	if (body) {
-		int k = n > 1 ? duk_to_number(J, 1) : -1;
-		if (k > -1 && k < body->connectionCount) {
-			duk_idx_t obj_idx = duk_push_object(J);
-			{
-				duk_push_number(J, body->connections[k].joint1), duk_put_prop_string(J, obj_idx, "a");
-				duk_push_number(J, body->connections[k].joint2), duk_put_prop_string(J, obj_idx, "b");
-			}
-		} else {
-			duk_push_number(J, body->connectionCount);
-		}
-		return 1;
-	} else return 0;
-}
-duk_ret_t composer_physics_debug	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	physics_debug = n > 0 ? duk_to_number(J, 0) : !physics_debug;
-	duk_push_number(J, physics_debug);
-	return 1;
-}
-duk_ret_t composer_physics_step		(duk_context *J) {
-	TPE_worldStep(&tpe_world); // simulate next tick
-	return 0;
-}
-duk_ret_t composer_physics_accelerate(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int j = n > 0 ? duk_to_int(J, 0) : -1;
-	if (j > -1 && j < tpe_world.bodyCount) {
-		float x = n > 1 ? duk_to_number(J, 1) * ACCELERATION : 0;
-		float y = n > 2 ? duk_to_number(J, 2) * ACCELERATION : 0;
-		float z = n > 3 ? duk_to_number(J, 3) * ACCELERATION : 0;
-		TPE_bodyAccelerate(&tpe_world.bodies[j], TPE_vec3(x, y, z));
-	}
-	return 0;
-}
-duk_ret_t composer_physics_zlimit	(duk_context *J) {
-	// as we're in 2D we'll keep all joint Z positions and velocities at 0
-	for (int i = 0; i < tpe_world.bodyCount; ++i) {
-		for (int j = 0; j < tpe_world.bodies[i].jointCount; ++j) {
-			tpe_world.bodies[i].joints[j].position.z = 0;
-			tpe_world.bodies[i].joints[j].velocity[2] = 0;
-		}
-	}
-	return 0;
-}
-duk_ret_t composer_physics_camview	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	camview.x = n > 0 ? duk_to_number(J, 0) : 0;
-	camview.y = n > 1 ? duk_to_number(J, 1) : 0;
-	camview.z = n > 2 ? duk_to_number(J, 2) : 0;
-	return 0;
-}
-duk_ret_t composer_physics_camrot	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	camrot.x = n > 0 ? duk_to_number(J, 0) : 0;
-	camrot.y = n > 1 ? duk_to_number(J, 1) : 0;
-	camrot.z = n > 2 ? duk_to_number(J, 2) : 0;
-	return 0;
-}
-duk_ret_t composer_physics_campos	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	campos.x = n > 0 ? duk_to_number(J, 0) : 0;
-	campos.y = n > 1 ? duk_to_number(J, 1) : 0;
-	campos.z = n > 2 ? duk_to_number(J, 2) : 0;
-	return 0;
-}
-duk_ret_t composer_physics_camfactor	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	camfactorx = n > 0 ? duk_to_number(J, 0) : 1;
-	camfactory = n > 1 ? duk_to_number(J, 0) : 1;
-	return 0;
-}
-duk_ret_t composer_physics_gridres	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	gridres = n > 0 ? duk_to_number(J, 0) : 1;
-	return 0;
-}
-duk_ret_t composer_physics_gridsize	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	gridsize = n > 0 ? duk_to_number(J, 0) : 1;
-	return 0;
-}
-duk_ret_t composer_physics_gravitate	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int j = n > 0 ? duk_to_int(J, 0) : -1;
-	if (j > -1 && j < tpe_world.bodyCount) {
-		TPE_bodyApplyGravity(&tpe_world.bodies[j], TPE_F / 100);
-	}
-	return 0;
-}
-duk_ret_t composer_physics_isactive	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int j = n > 0 ? duk_to_number(J, 0) : -1;
-	if (j > -1 && j < tpe_world.bodyCount) {
-		duk_push_number(J, TPE_bodyIsActive( &tpe_world.bodies[j] ) );
-		return 1;
-	} else return 0;
-}
-duk_ret_t composer_physics_getcenter	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int j = n > 0 ? duk_to_number(J, 0) : -1;
-	if (j > -1 && j < tpe_world.bodyCount) {
-		TPE_Vec3 pos = TPE_bodyGetCenterOfMass(&tpe_world.bodies[j]);
-		nuqtahf nq = { 0 };
-		physics_topx(pos, &nq);
-
-		duk_idx_t obj_idx = duk_push_object(J);
-		{
-			duk_push_number(J, nq.x), duk_put_prop_string(J, obj_idx, "x");
-			duk_push_number(J, nq.y), duk_put_prop_string(J, obj_idx, "y");
-		}
-		return 1;
-	} else return 0;
-}
-
-duk_ret_t composer_physics_add	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int mass = n > 0 ? duk_to_number(J, 0) : 1;
-	duk_push_number(J, physics_add(mass));
-	return 1;
-}
-duk_ret_t composer_physics_get	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int j = n > 0 ? duk_to_number(J, 0) : -1;
-	TPE_Body *body = physics_get(j);
-	if (body) {
-		duk_idx_t obj_idx = duk_push_object(J);
-		{
-			duk_push_number(J, body->jointCount), duk_put_prop_string(J, obj_idx, "joints");
-			duk_push_number(J, body->connectionCount), duk_put_prop_string(J, obj_idx, "connections");
-			duk_push_number(J, body->jointMass), duk_put_prop_string(J, obj_idx, "mass");
-			duk_push_number(J, body->friction), duk_put_prop_string(J, obj_idx, "friction");
-			duk_push_number(J, body->elasticity), duk_put_prop_string(J, obj_idx, "elasticity");
-			duk_push_number(J, body->flags), duk_put_prop_string(J, obj_idx, "flags");
-			duk_push_number(J, body->deactivateCount), duk_put_prop_string(J, obj_idx, "deactivations");
-		}
-		return 1;
-	}
-	return 0;
-}
-duk_ret_t composer_physics_remove(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int j = n > 0 ? duk_to_number(J, 0) : -1;
-	duk_push_number(J, physics_remove(j));
-	return 1;
-}
-
-duk_ret_t composer_physics_addjoint		(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int body = n > 0 ? duk_to_number(J, 0) : -1;
-	float size = n > 1 ? duk_to_number(J, 1) : 1;
-	duk_push_number(J, physics_add_joint( physics_get(body), size ));
-	return 1;
-}
-duk_ret_t composer_physics_removejoint	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int body = n > 0 ? duk_to_number(J, 0) : -1;
-	int joint = n > 1 ? duk_to_number(J, 1) : -1;
-	duk_push_number(J, physics_remove_joint( physics_get(body), joint ));
-	return 1;
-}
-
-duk_ret_t composer_physics_connect		(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int body = n > 0 ? duk_to_number(J, 0) : -1;
-	int joint1 = n > 1 ? duk_to_number(J, 1) : -1;
-	int joint2 = n > 2 ? duk_to_number(J, 2) : -1;
-	duk_push_number(J, physics_connect( physics_get(body), joint1, joint2 ));
-	return 1;
-}
-duk_ret_t composer_physics_disconnect	(duk_context *J) {
-	duk_idx_t n = duk_get_top(J);
-	int body = n > 0 ? duk_to_number(J, 0) : -1;
-	int joint1 = n > 1 ? duk_to_number(J, 1) : -1;
-	int joint2 = n > 2 ? duk_to_number(J, 2) : -1;
-	duk_push_number(J, physics_disconnect( physics_get(body), joint1, joint2 ));
-	return 1;
-}
-//}
-
 //{ files
 duk_ret_t composer_files_list	(duk_context *J) {
 	int n = duk_get_top(J);
@@ -873,7 +480,7 @@ duk_ret_t composer_process_run(duk_context *J) {
 }
 //}
 
-//{ sgl
+/*{ sgl
 duk_ret_t composer_sgl_tri_set(duk_context *J) { // model, t, x, y, z
 	int n = duk_get_top(J);
 	if (n > 4) {
@@ -1298,9 +905,9 @@ duk_ret_t composer_sgl_materials_remove	(duk_context *J) {
 	duk_push_number(J, sgl_remove_material(j));
 	return 1;
 }
-//}
+*/}
 
-//{ camera
+/*{ camera
 duk_ret_t composer_camera_translation (duk_context *J) {
 	int n = duk_get_top(J);
 	if (n > 3) {
@@ -1365,7 +972,7 @@ duk_ret_t composer_camera_focal (duk_context *J) {
 		return 1;
 	}
 }
-//}
+*/}
 
 //{ ease
 duk_ret_t composer_ease (duk_context *J) {
@@ -1382,10 +989,6 @@ duk_ret_t composer_ease (duk_context *J) {
 	}
 	return 0;
 }
-//}
-
-//{ opengl
-
 //}
 
 static duk_ret_t native_print() {
@@ -1611,20 +1214,6 @@ void after_canvas_raees(msfoof *m) {
 		queuereload = 0;
 		composer_load_app(1);
 	}
-
-//	S3L_newFrame(); S3L_drawScene(scene);
-
-	if (!physics_debug) return;
-	int color = 0;
-	void draw2msfoof(uint16_t x, uint16_t y, uint8_t c) {
-		if (c == TPE_DEBUG_COLOR_CONNECTION	)	color = 0xff2222;
-		if (c == TPE_DEBUG_COLOR_JOINT		)	color = 0x22ff22;
-		if (c == TPE_DEBUG_COLOR_ENVIRONMENT)	color = 0x223344;
-		if (c == TPE_DEBUG_COLOR_INACTIVE	)	color = 0x662222;
-		msfoof_rect(m, x*camfactorx, y*camfactory, 2, 2, -1, color);
-	}
-	
-	TPE_worldDebugDraw(&tpe_world, draw2msfoof, campos, camrot, camview, gridres, gridsize);
 }
 void on_reload() {
 	physics_init();
@@ -1663,37 +1252,6 @@ void on_reload() {
 		push_c_method("with_name",	composer_ease	);
 	}
 	duk_put_global_string(J, "ease");
-		
-	duk_push_object(J); {
-		push_c_method("debug",		composer_physics_debug		);
-		push_c_method("campos",		composer_physics_campos		);
-		push_c_method("camrot",		composer_physics_camrot		);
-		push_c_method("camview",	composer_physics_camview	);
-		push_c_method("camfactor",	composer_physics_camfactor	);
-		push_c_method("gridres",	composer_physics_gridres	);
-		push_c_method("gridsize",	composer_physics_gridsize	);
-
-		push_c_method("bodies",		composer_physics_bodies		);
-		push_c_method("joints",		composer_physics_joints		);
-		push_c_method("connections",composer_physics_connects	);
-		push_c_method("step",		composer_physics_step		);
-		push_c_method("accelerate",	composer_physics_accelerate	);
-		push_c_method("gravitate",	composer_physics_gravitate	);
-		push_c_method("isactive",	composer_physics_isactive	);
-		push_c_method("getcenter",	composer_physics_getcenter	);
-		push_c_method("zlimit",		composer_physics_zlimit		);
-
-		push_c_method("add",		composer_physics_add		);
-		push_c_method("get",		composer_physics_get		);
-		push_c_method("remove",		composer_physics_remove		);
-
-		push_c_method("addjoint",	composer_physics_addjoint	);
-		push_c_method("removejoint",composer_physics_removejoint);
-
-		push_c_method("connect",	composer_physics_connect	);
-		push_c_method("disconnect",	composer_physics_disconnect	);
-	}
-	duk_put_global_string(J, "physics");
 
 	duk_push_object(J); {
 		push_c_method("flush",		composer_canvas_flush			);
@@ -1728,81 +1286,12 @@ void on_reload() {
 	duk_put_global_string(J, "canvas");
 
 	duk_push_object(J); {
-		push_c_method("materials_count",	composer_sgl_materials_count	);
-		push_c_method("materials_add",		composer_sgl_materials_add		);
-		push_c_method("materials_set",		composer_sgl_materials_set		);
-		push_c_method("materials_get",		composer_sgl_materials_get		);
-		push_c_method("materials_remove",	composer_sgl_materials_remove	);
-
-		push_c_method("vert_set",	composer_sgl_vert_set		);
-		push_c_method("vert_add",	composer_sgl_vert_add		);
-		push_c_method("vert_get",	composer_sgl_vert_get		);
-		push_c_method("vert_to_screen",	composer_sgl_vert_to_screen		);
-		push_c_method("vert_remove",composer_sgl_vert_remove	);
-
-		push_c_method("tri_set",	composer_sgl_tri_set		);
-		push_c_method("tri_material",composer_sgl_tri_material	);
-		push_c_method("tri_add",	composer_sgl_tri_add		);
-		push_c_method("tri_get",	composer_sgl_tri_get		);
-		push_c_method("tri_remove",	composer_sgl_tri_remove		);
-
-		push_c_method("models",		composer_sgl_models			);
-		push_c_method("add",		composer_sgl_add			);
-		push_c_method("get",		composer_sgl_get			);
-		push_c_method("remove",		composer_sgl_remove			);
-
-		push_c_method("translation",composer_sgl_translation	);
-		push_c_method("rotation",	composer_sgl_rotation		);
-		push_c_method("scale",		composer_sgl_scale			);
-		push_c_method("backface",	composer_sgl_backface		);
-
-		push_c_method("set_mode",	composer_sgl_set_mode		);
-		push_c_method("get_mode",	composer_sgl_get_mode		);
-
-		push_c_method("light",		composer_sgl_light			);
-		push_c_method("fog",		composer_sgl_fog			);
-		push_c_method("noise",		composer_sgl_noise			);
-		push_c_method("wire",		composer_sgl_wire			);
-
-		push_c_method("render",		composer_sgl_render			);
-
-		push_c_method("raycast",	composer_sgl_raycast		);
-		push_c_method("to_screen",	composer_sgl_to_screen		);
-		push_c_method("look_at",	composer_sgl_look_at		);
-		push_c_method("point_at",	composer_sgl_point_at		);
 	}
 	duk_put_global_string(J, "sgl");
 
 	duk_push_object(J); {
-		push_c_method("translation",composer_camera_translation	);
-		push_c_method("rotation",	composer_camera_rotation	);
-		push_c_method("scale",		composer_camera_scale		);
-		push_c_method("focal",		composer_camera_focal		);
 	}
 	duk_put_global_string(J, "camera");
-
-	duk_push_object(J); {
-		push_c_method("harf",			composer_kaatib_harf);
-		push_c_method("tool",			composer_kaatib_tool);
-		push_c_method("iftah",			composer_kaatib_iftah); // open file
-		push_c_method("save",			composer_kaatib_save); // save file
-		push_c_method("ihsab",			composer_kaatib_ihsab); // calc huroof bounds
-//		push_c_method("up",				composer_kaatib_up); // 
-//		push_c_method("down",			composer_kaatib_down); // 
-		push_c_method("hajm",			composer_kaatib_hajm); // x, y, w, h
-		push_c_method("taht",			composer_kaatib_taht); // background transparent
-		push_c_method("qadd",			composer_kaatib_qadd); // font size
-		push_c_method("mu3aaq",			composer_kaatib_mu3aaq); // disabled
-		push_c_method("makaan",			composer_kaatib_makaan); // ox, oy scroll offsets
-		push_c_method("idhan",			composer_kaatib_idhan); // paint it
-		push_c_method("tasteer",			composer_kaatib_tasteer); // draw
-		push_c_method("muntahaa",		composer_kaatib_muntahaa); // scroll w, h
-		push_c_method("muashshar",		composer_kaatib_muashshar); // cursor
-		push_c_method("muashshar_zaahir",composer_kaatib_muashshar_zaahir); // show cursor
-		push_c_method("mutaharrikah",	composer_kaatib_mutaharrikah); // animate scrolling
-		push_c_method("cu3aa3",			composer_kaatib_cu3aa3); // raycast
-	}
-	duk_put_global_string(J, "kaatib");
 
 	duk_push_object(J); {
 		push_c_method("run",			composer_process_run);

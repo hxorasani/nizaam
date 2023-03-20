@@ -1,9 +1,7 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <stdbool.h>
-#include <shader.h>
 #include "composer.h"
-#include "sgl.h"
 
 #define s2c(key, rep) if (k == key) b = rep;
 
