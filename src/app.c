@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 			.ism = argv[1],
 			.xitaab = tmp,
 		};
-		composer_badaa(t);
+		composer_init(t);
 
 		composer_tamaam();
 		free(tmp);

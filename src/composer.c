@@ -18,7 +18,6 @@
 kaatib ktb;
 eqonah eqnh;
 composer trkb;
-polygonf poly;
 
 int use_canvas = 1;
 
@@ -647,11 +646,20 @@ void composer_canvas_context_window() {
 	surfaceraees = cairo_image_surface_create_for_data (
 		(u_char *) WJHH.raees.mtrx.barzax,
 		CAIRO_FORMAT_ARGB32,
-		WJHH.raees.mtrx.w,
-		WJHH.raees.mtrx.h,
-		WJHH.raees.mtrx.stride
+		WJHH.raees.mtrx.w, WJHH.raees.mtrx.h, WJHH.raees.mtrx.stride
 	);
-	cairaees = cairo_create (surfaceraees);
+	if (cairo_surface_status (surfaceraees) != CAIRO_STATUS_SUCCESS) {
+		printf ("couldn't create cairo surface\n"); exit(EXIT_FAILURE);
+	}
+	
+	current_context = cairaees = cairo_create (surfaceraees);
+	if (cairo_status (current_context) != CAIRO_STATUS_SUCCESS) {
+		printf ("couldn't create cairo context\n"); exit(EXIT_FAILURE);
+	}
+
+	current_context = syq = cairaees;
+	current_matrix = &WJHH.raees.mtrx;
+	current_surface = surfaceraees;
 }
 void composer_canvas_context_indicator() {
 	if (surfacemshr) cairo_surface_destroy(surfacemshr);
@@ -818,7 +826,7 @@ char composer_lowhah(mafateeh m) {
 	}
 	return yes;
 }
-int composer_handler(waaqi3ah *w) {
+int composer_handler(waaqi3ah *w, mafateeh *mif) {
 	if (w) {
 		if (XATAA) amr_tb3_waaqi3ah(w);
 		if (w->ism == MUDEER && w->miftaah == RAKKAZ) {
@@ -827,7 +835,10 @@ int composer_handler(waaqi3ah *w) {
 		if (w->ism == MUDEER && w->miftaah == ISHAARAH) {
 			char yes = 0;
 			mafateeh m = { 0 };
-			str2mafateeh(w->qadrstr, &m);
+			if (mif) m = *mif; else str2mafateeh(w->qadrstr, &m);
+			
+//			printf("[%d] %d %.1f %.1f\n", m.state, m.key, m.x, m.y);
+
 			if (!yes && trkb.on_pointer) {
 				yes = trkb.on_pointer(m);
 			}
@@ -844,15 +855,14 @@ int composer_handler(waaqi3ah *w) {
 		if (w->ism == MUDEER && w->miftaah == LOWHAH) {
 			char yes = 0;
 			mafateeh m = { 0 };
-			str2mafateeh(w->qadrstr, &m);
+			if (mif) m = *mif; else str2mafateeh(w->qadrstr, &m);
+
+//			printf("[%d] c%d s%d a%d m%d %d %s\n", m.state, m.ctrl, m.shift, m.alt, m.meta, m.key, m.ism);
+
 			if (!m.state) {
 				if (m.ctrl) {
 					if (m.key == KEY_R) composer_load_app(1), yes = 1;
 					if (m.key == KEY_Q) exit(0), yes = 1;
-				}
-				if (m.alt) {
-					// TODO implement anti aliasing at matrix level (?)
-					if (m.key == KEY_S) WJHH.mshr.mtrx.smooth = !WJHH.mshr.mtrx.smooth, yes = 1;
 				}
 			}
 			if (!yes && trkb.b_lowhah) {
@@ -900,7 +910,7 @@ int composer_handler(waaqi3ah *w) {
 				
 				cairo_surface_destroy(image);*/
 
-				WJHH.mshr.mtrx.smooth = 1;
+//				WJHH.mshr.mtrx.smooth = 1;
 				if (w->qadr == 1)
 					if (trkb.on_bound_indicator) trkb.on_bound_indicator( (ihaatahf) {0, 0, width, height} );
 			}
@@ -915,6 +925,8 @@ int composer_handler(waaqi3ah *w) {
 
 					if (darar) {
 						cairo_surface_flush(surfacemshr);
+						
+						if (MUDEERUID > -1) // IMPORTANT when not on nizaam-waajihah backend
 						amr_irsal_ilaa(MUDEERUID, MUSHEER, DARAR, 1);
 					}
 					
@@ -929,11 +941,9 @@ int composer_handler(waaqi3ah *w) {
 		if (w->ism == RAEES) {
 			if (w->miftaah == MST3D) {
 				int width = WJHH.raees.mtrx.w, height = WJHH.raees.mtrx.h;
-				syq = cairaees;
 				
 				composer_canvas_context_window();
 
-				WJHH.raees.mtrx.smooth = 1;
 				WJHH.raees.mutadarrar = 1;
 				if (w->qadr == 1) {
 					ktb.g.w = WJHH.raees.mtrx.w;
@@ -950,7 +960,7 @@ int composer_handler(waaqi3ah *w) {
 					if (trkb.on_bound_window) trkb.on_bound_window( (ihaatahf) {0, 0, width, height} );
 			}
 			if (w->miftaah == INSHA && WJHH.raees.zaahir) {
-				syq = cairaees;
+				current_context = syq = cairaees;
 				current_matrix = &WJHH.raees.mtrx;
 				current_surface = surfaceraees;
 				if (WJHH.raees.mutadarrar) {
@@ -964,6 +974,7 @@ int composer_handler(waaqi3ah *w) {
 						if (trkb.after_canvas_raees)
 							trkb.after_canvas_raees(&WJHH.raees.mtrx);
 
+						if (MUDEERUID > -1) // IMPORTANT when not on nizaam-waajihah backend
 						amr_irsal_ilaa(MUDEERUID, RAEES, DARAR, 1);
 					}
 					
@@ -979,7 +990,7 @@ int composer_handler(waaqi3ah *w) {
 
 	return 0;
 }
-void composer_badaa(composer t) { // 
+void composer_init(composer t) { // 
 	// TODO this comes from helpers, prepend helpers_ to this func to help rmmbr
 //	taba3_waqt("badaa");
 
@@ -1001,9 +1012,6 @@ void composer_badaa(composer t) { //
 	}
 
 
-	poly.length = 0;
-	poly.nuqaat = (nuqtahf *) calloc(256, sizeof(nuqtahf));
-
 	trkb.ism					= t.ism					;
 	trkb.xitaab					= t.xitaab				;
 	trkb.b_lowhah				= t.b_lowhah			;
@@ -1015,8 +1023,8 @@ void composer_badaa(composer t) { //
 	trkb.on_bound_window		= t.on_bound_window		;
 	trkb.after_canvas_raees		= t.after_canvas_raees	;
 	trkb.on_focus				= t.on_focus			;
-
-//	if (t.xitaab != NULL) composer_badaa_js(t);
+	trkb.set_window				= t.set_window			;
+	trkb.event_provider			= t.event_provider		;
 
 	tarmeez_core();
 	kaatib_init(&ktb); // will do matn -> huroof
@@ -1060,14 +1068,21 @@ void composer_badaa(composer t) { //
 	
 	ktb.qmc = &qmc; // attach canvas wrapper/driver/bridge
 
-	amr_towheed(trkb.ism);
-	amr_wijhah(1);
+	if (trkb.set_window) {
+		trkb.set_window(trkb.ism);
+	} else {
+		amr_towheed(trkb.ism);
+		amr_wijhah(1);
+	}
 	
 	composer_load_app(0);
 
-	amr_axath(&composer_handler);
+	if (trkb.event_provider) {
+		trkb.event_provider( &composer_handler );
+	} else {
+		amr_axath(&composer_handler);
+	}
 	
 	composer_tamaam();
-	free(poly.nuqaat);
 }
 

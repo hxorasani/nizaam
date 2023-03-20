@@ -34,17 +34,20 @@ typedef struct {
 	void (*on_reload)(); // for drawing calls
 //	void (*on_frame)(); // on new frame
 	canvas *qmc;
+
+	// override amr* functions
+	void (*set_window)(u_char *);
+	void (*event_provider)( int (*onwaaqi3ah)() );
 } composer;
 
 kaatib ktb;
 canvas *current_canvas;
+cairo_t *current_context;
 cairo_surface_t *current_surface;
 msfoof *current_matrix;
 void composer_kaatib_paint(char);
 
-enum {
-	KAATIB, SOORAH, SAWT, VIDEO
-};
+enum { KAATIB, SOORAH, SAWT, VIDEO };
 
 typedef struct {
 	float x, y, w, h;
@@ -91,7 +94,7 @@ int composer_b_dihaan(int arg1);
 int composer_b_lowhah(mafateeh wm);
 void composer_load_app(char i);
 void composer_tamaam();
-void composer_badaa(composer t);
+void composer_init(composer t);
 
 msfoof * get_current_matrix();
 

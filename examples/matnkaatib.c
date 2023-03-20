@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 //		.xitaab = "apps/matnkaatib.js",
 	};
 
-	composer_badaa(t);
+	composer_init(t);
 
     return EXIT_SUCCESS;
 }

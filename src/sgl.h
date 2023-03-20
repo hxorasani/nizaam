@@ -1,7 +1,8 @@
-#ifndef _s3l_h
-#define _s3l_h
+#ifndef _sgl_h
+#define _sgl_h
 
 // TODO explore array.h, if it can simplify uid->rid tracking
+// TODO rename to sgl
 //{ S3L config defines
 #define S3L_FLAT 0
 #define S3L_NEAR_CROSS_STRATEGY 3

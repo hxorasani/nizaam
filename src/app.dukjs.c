@@ -4,6 +4,7 @@
  * 
  * */
 #include "app.dukjs.h"
+#include "sdl.h"
 #define XATAA 0
 
 duk_context *J;
@@ -143,8 +144,7 @@ duk_ret_t composer_msfoof_overlap(duk_context *J) { // 2 rects, return bool
 	} else return 0;
 }
 duk_ret_t composer_msfoof_clear(duk_context *J) {
-	int color = duk_get_top(J) ? duk_to_number(J, 0) : 0;
-	msfoof_clear( current_matrix, color );
+	msfoof_clear( current_matrix, duk_get_top(J) ? duk_get_number(J, 0) : 0 );
 	return 0;
 }
 //}
@@ -1384,24 +1384,16 @@ duk_ret_t composer_ease (duk_context *J) {
 }
 //}
 
+//{ opengl
+
+//}
+
 static duk_ret_t native_print() {
 	duk_push_string(J, " ");
 	duk_insert(J, 0);
 	duk_join(J, duk_get_top(J) - 1);
 	taba3_waqt((char *) duk_safe_to_string(J, -1));
 	return 0;
-}
-static duk_ret_t native_adder() {
-	int i;
-	int n = duk_get_top(J);  /* #args */
-	double res = 0.0;
-
-	for (i = 0; i < n; i++) {
-		res += duk_to_number(J, i);
-	}
-
-	duk_push_number(J, res);
-	return 1;  /* one return value */
 }
 void print_duk_stack() {
 	duk_int_t n = duk_get_top(J);
@@ -1484,38 +1476,30 @@ void push_c_method(char *name, void *function) {
 	duk_put_prop_string(J, -2, name); // AND what about this -2
 }
 int if_js_function(char *name) {
+	if (XATAA > 1) printf("if_js_function %s\n", name);
 	duk_idx_t func_idx = duk_get_global_string(J, name);
 	if (func_idx) {
 		// leaves string on stack, either pop it manually OR
 		// call js_func_with_stack, and that does it for you
 		return 1;
 	} else {
-		XATAA && printf("if_js_function %s is undefined\n", name);
+		if (XATAA > 1) printf("if_js_function %s is undefined\n", name);
 		duk_pop(J);
 		return 0;
 	}
 }
 int call_js_function_with_stack(char *name, int args) {
-//	print_duk_stack();
+	if (XATAA > 1) printf("call_js_function_with_stack %s %d\n", name, args);
+	if (XATAA > 2) print_duk_stack();
 	duk_int_t rc = duk_pcall(J, args);  /* [ ... func 2 3 ] -> [ 5 ] */
 	int retval = 0;
 	if (rc == DUK_EXEC_SUCCESS) {
 		retval = duk_get_int(J, -1);
 		duk_pop(J);
 	} else {
-		if (duk_is_error(J, -1)) {
-			/* Accessing .stack might cause an error to be thrown, so wrap this
-			 * access in a duk_safe_call() if it matters.
-			 */
-//			duk_get_prop_string(J, -1, "stack");
-			duk_safe_to_stacktrace(J, -1);
-			printf("error: %s\n", duk_safe_to_string(J, -1));
-			duk_pop(J);
-		} else {
-			/* Non-Error value, coerce safely to string. */
-			printf("error: %s\n", duk_safe_to_string(J, -1));
-			duk_pop(J);
-		}
+		if (duk_is_error(J, -1)) duk_safe_to_stacktrace(J, -1);
+		printf("error: %s\n", duk_safe_to_string(J, -1));
+		duk_pop(J);
 	}
 	return retval;
 }
@@ -1857,14 +1841,17 @@ int main(int argc, char **argv, char *envp[]) {
 			.after_canvas_raees = &after_canvas_raees,
 			.on_focus = &on_focus,
 		};
-		composer_badaa(dukcmpsr);
+
+		sdl_composer_bridge(&dukcmpsr);
+
+		composer_init(dukcmpsr);
 
 		if (J) duk_destroy_heap(J);
 
 		composer_tamaam();
 		free(appname);
 	} else {
-		printf("%s\n", "could not find app");
+		printf("could not find app\n");
 	}
 }
 

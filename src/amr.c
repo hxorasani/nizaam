@@ -451,7 +451,7 @@ int amr_axath_fi(int (*onwaaqi3ah)(), int timeout) { // get waaqi3aat with timeo
 			if (WIJHAHHAAJA) amr_mantiq_wijhah(tmp);
 
 			if (onwaaqi3ah) {
-				int handled = onwaaqi3ah(tmp, -1);
+				int handled = onwaaqi3ah(tmp, NULL);
 				if (handled == 0) { // not handled
 					if (tmp->ism == MUDEER && tmp->miftaah == QATAL)
 						exit(EXIT_SUCCESS);
@@ -498,7 +498,7 @@ int amr_axath_fi(int (*onwaaqi3ah)(), int timeout) { // get waaqi3aat with timeo
 					}
 				}
 			} else { // custom watched events, we don't assume any format
-				onwaaqi3ah(NULL, currentfd);
+//				onwaaqi3ah(NULL, currentfd);
 			}
 		}
 	}

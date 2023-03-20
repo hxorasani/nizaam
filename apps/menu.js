@@ -172,7 +172,7 @@ var menu;
 				yes = 1;
 			}
 			if (!m.state) {
-				if (k == 'compose'	) {
+				if (k == 'compose') {
 					menu.toggle(), yes = 1;
 				}
 				if (m.ctrl && m.text == 'l') clear();

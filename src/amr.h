@@ -136,9 +136,9 @@ extern wijhah WJHH;
 typedef struct {
 	int type;
 	int ctrl, meta, alt, shift, key, state;
-	float x, y, w;
-	u_char huroof[4];
-	u_char ism[4];
+	float x, y, w, wx, wy;
+	u_char huroof[32];
+	u_char ism[32];
 } mafateeh;
 u_char *mafateeh2str(mafateeh m);
 void str2mafateeh(u_char *str, mafateeh *m);

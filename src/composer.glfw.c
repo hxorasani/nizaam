@@ -1564,7 +1564,7 @@ int composer_handler(waaqi3ah *w) {
 
 	return 0;
 }
-void composer_badaa_js(composer t) { // 
+void composer_init_js(composer t) { // 
 	J = js_newstate(NULL, NULL, JS_STRICT);
 
 	// allow access to the global environment via the 'global' name
@@ -1700,7 +1700,7 @@ void composer_badaa_js(composer t) { //
 	composer_ahjaam(MUSHEER);
 	composer_ahjaam(RAEES);
 }
-void composer_badaa(composer t) { // 
+void composer_init(composer t) { // 
 	taba3_waqt("badaa");
 
 	poly.length = 0;
@@ -1714,7 +1714,7 @@ void composer_badaa(composer t) { //
 	trkb.on_bound_indicator = t.on_bound_indicator;
 	trkb.on_bound_window   = t.on_bound_window;
 
-	if (t.xitaab != NULL) composer_badaa_js(t);
+	if (t.xitaab != NULL) composer_init_js(t);
 
 	tarmeez_core();
 	kaatib_init(&ktb); // will do matn -> huroof

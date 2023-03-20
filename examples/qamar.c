@@ -218,7 +218,7 @@ int main(int argc, char **argv) {
 		.ism = "qamar",
 		.xitaab = "apps/kaatibmatn.js",
 	};
-	composer_badaa(t);
+	composer_init(t);
 
     composer_tamaam();
 

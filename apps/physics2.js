@@ -6,6 +6,7 @@ var pos = [0, 0, 0];
 var rnd = Math.round;
 var xh;
 
+require('apps/core/text.js');
 require('apps/menu.js');
 
 var phytogname = function () { return (phyiscs_enabled ? 'disable' : 'enable'); };
@@ -70,14 +71,6 @@ function circle(x, y, r, bg, fg) {
 		canvas.lwn(f.r, f.g, f.b);
 		canvas.stroke(0);
 	}
-}
-function text(x, y, txt) {
-	canvas.lwn(1, 1, 1);
-	txt.split("\n").forEach(function (c, e) {
-		canvas.move_to(x+(xh.x/2), y+((1+e)*xh.h));
-		canvas.matn(c);
-	});
-	canvas.renew_path();
 }
 function apply_physics() { if (phyiscs_enabled) {
 	for (var i = 0; i < 2; ++i) {

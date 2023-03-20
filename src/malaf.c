@@ -119,13 +119,13 @@ int malaf_init(malaf *m, char *path) {
 	if (path != NULL) {
 		m->fd = open(path, O_RDONLY);
 		if (m->fd == -1) {
-			printf("malaf_init %s\n", strerror(errno));
+			printf("malaf_init %s %s\n", strerror(errno), path);
 			return EXIT_FAILURE;
 		}
 		
 		struct stat s;
 		if (fstat(m->fd, &s) == -1) {
-			printf("malaf_init %s\n", strerror(errno));
+			printf("malaf_init %s %p\n", strerror(errno), path);
 			return EXIT_FAILURE;
 		}
 		

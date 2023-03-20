@@ -131,49 +131,47 @@ hooks.set('timeline.restart', function () { direction = !direction; });
 
 scene.set_zoom(3);
 
-function on_bound_window () {
-	/*ease.all.forEach(function (o, i) {
-		var pct = i/ease.all.length;
-		
-		materials.add( colors.to_integer(1, 1, 1*pct, 1-pct) );
+/*ease.all.forEach(function (o, i) {
+	var pct = i/ease.all.length;
+	
+	materials.add( colors.to_integer(1, 1, 1*pct, 1-pct) );
 
-		var x = i*u2;
+	var x = i*u2;
 
-		balls[i] = mesh( 0, v3(x - U*0.7, -10, 0), u2*.8 );
-	});*/
-	var b = balls[0] = mesh('bone');
-	b.add_cube(20).select(b.recent.front ).apply_material(1)
-				.select(b.recent.right ).apply_material(2)
-				.select(b.recent.left  ).apply_material(3)
-				.select(b.recent.top   ).apply_material(4)
-				.select(b.recent.bottom).apply_material(5)
-				.select(b.recent.back  ).apply_material(6)
-				;
-	b.select(b.recent.top).translate	(0, 100, 0)
-							.scale		(.1, 1, .1);
+	balls[i] = mesh( 0, v3(x - U*0.7, -10, 0), u2*.8 );
+});*/
+var b = balls[0] = mesh('bone');
+b.add_cube(20).select(b.recent.front ).apply_material(1)
+			.select(b.recent.right ).apply_material(2)
+			.select(b.recent.left  ).apply_material(3)
+			.select(b.recent.top   ).apply_material(4)
+			.select(b.recent.bottom).apply_material(5)
+			.select(b.recent.back  ).apply_material(6)
+			;
+b.select(b.recent.top).translate	(0, 100, 0)
+						.scale		(.1, 1, .1);
 
-//	b.add_cube().select(b.recent.front ).apply_material(6)
-//				.select(b.recent.right ).apply_material(5)
-//				.select(b.recent.left  ).apply_material(4)
-//				.select(b.recent.top   ).apply_material(3)
-//				.select(b.recent.bottom).apply_material(2)
-//				.select(b.recent.back  ).apply_material(1)
-//				;
-//	b.select(b.recent.bottom).scale(.5, 1, .5);
-//	b.select(b.recent.top   ).translate(0, -150);
-//	b.select(b.recent.top   ).scale(.2, 1, .2);
+//b.add_cube().select(b.recent.front ).apply_material(6)
+//			.select(b.recent.right ).apply_material(5)
+//			.select(b.recent.left  ).apply_material(4)
+//			.select(b.recent.top   ).apply_material(3)
+//			.select(b.recent.bottom).apply_material(2)
+//			.select(b.recent.back  ).apply_material(1)
+//			;
+//b.select(b.recent.bottom).scale(.5, 1, .5);
+//b.select(b.recent.top   ).translate(0, -150);
+//b.select(b.recent.top   ).scale(.2, 1, .2);
 
-	b = balls[1] = mesh('target');
-	b.add_cube(20).select(b.recent.front ).apply_material(1)
-				.select(b.recent.right ).apply_material(2)
-				.select(b.recent.left  ).apply_material(3)
-				.select(b.recent.top   ).apply_material(4)
-				.select(b.recent.bottom).apply_material(5)
-				.select(b.recent.back  ).apply_material(6)
-	b.location.x = 150;
+b = balls[1] = mesh('target');
+b.add_cube(20).select(b.recent.front ).apply_material(1)
+			.select(b.recent.right ).apply_material(2)
+			.select(b.recent.left  ).apply_material(3)
+			.select(b.recent.top   ).apply_material(4)
+			.select(b.recent.bottom).apply_material(5)
+			.select(b.recent.back  ).apply_material(6)
+b.location.x = 150;
 
-	scene.select(b.uid);
-}
+scene.select(b.uid);
 function on_paint_window () {
 	matrix.clear(0);
 	canvas.save();

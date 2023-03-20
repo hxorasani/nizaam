@@ -59,6 +59,6 @@ int composer_b_dihaan(int arg1);
 int composer_b_lowhah(mafateeh wm);
 void composer_load_app();
 void composer_tamaam();
-void composer_badaa(composer t);
+void composer_init(composer t);
 
 #endif

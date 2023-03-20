@@ -51,8 +51,8 @@ soundio:
 	gcc -Wall -g -O2 -o bin/soundio src/soundio.c -lm -lsoundio
 
 app.dukjs:
-	gcc -g -o bin/app.dukjs $(AMR) $(KTB) $(CMPSR) src/app.dukjs.c -lduktape $(CAIROLIBS) $(FLAGS)
-#	ldd bin/app.dukjs
+	gcc -g -o bin/app.dukjs src/sdl.c `pkg-config --libs --cflags sdl2` -lGL -lm -lGLEW \
+	$(AMR) $(KTB) $(CMPSR) src/app.dukjs.c -lduktape $(CAIROLIBS) $(FLAGS)
 
 duktape-install:
 	cd src/duktape-2.7.0
@@ -62,6 +62,14 @@ duktape-install:
 mudeer:
 	gcc -g -o bin/mudeer $(AMR) src/tarmeez.c src/eqonah.c src/kaatib.c \
 	src/xat.c src/malaf.c src/mudeer.c $(FLAGS) $(FTFLAGS)
+
+glfw:
+	gcc -o bin/glfw src/glfw.c $(INCLIB) -lglfw -lGL -lm -lGLEW
+
+sdl:
+	gcc -o bin/sdl $(AMR) $(KTB) $(CMPSR) \
+	src/sdl.c $(INCLIB) `pkg-config --libs --cflags sdl2` -lGL -lm -lGLEW \
+	-lduktape $(CAIROLIBS) $(FLAGS)
 
 weston-client:
 	cc -o bin/weston-client src/weston-client.c -lwayland-client
