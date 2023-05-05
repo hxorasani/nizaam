@@ -1,91 +1,43 @@
-#include <GL/glew.h>
-#include <SDL2/SDL.h>
-#include <stdbool.h>
-#include "composer.h"
+#include "sdl.h"
 
+#define XATAA 0
+#define ENABLE_NUK 1
 #define s2c(key, rep) if (k == key) b = rep;
 
-SDL_Window* sdl_window;
-composer *sdl_composer;
-mafateeh wm = { 0 };
+SDL_Window *sdl_window = NULL;
+SDL_GLContext glContext;
+static composer *sdl_composer;
+static mafateeh wm = { 0 };
+static char gl_loaded = 0;
 
-u_int texture_id;
-u_char *sdl_buffer = NULL;
-int sdl_buffer_size = 0;
-int (*sdl_composer_event_handler)() = NULL;
+static int (*sdl_composer_event_handler)() = NULL;
+static int frame_rate = 70;
+static float frame_delay = 14; // 1000 / frame_rate
 
-void sdl_resize_handler (int width, int height, u_int* texture_id) {
-	glViewport (0, 0, width, height);
-	glMatrixMode (GL_PROJECTION);
-	glLoadIdentity ();
-	glOrtho (0.0f, 1.0f, 0.0f, 1.0f, -1.0f, 1.0f);
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glDeleteTextures (1, texture_id);
-	glGenTextures (1, texture_id);
-	glBindTexture (GL_TEXTURE_RECTANGLE_ARB, *texture_id);
-	glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA,
-		      width, height, 0,
-		      GL_BGRA, GL_UNSIGNED_BYTE, NULL);
-
-	glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-}
-void sdl_draw_texture (int width, int height, u_char* surf_data, u_int texture_id) {
-	if (!surf_data) { printf ("sdl_draw_texture - no surface-data\n"); return; }
-
-	glMatrixMode (GL_MODELVIEW);
-	glLoadIdentity ();
-
-	glPushMatrix ();
-
-	glBindTexture (GL_TEXTURE_RECTANGLE_ARB, texture_id);
-	glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA,
-		      width, height, 0,
-		      GL_BGRA, GL_UNSIGNED_BYTE,
-		      surf_data);
-
-	glColor4f (0, 0, 0, 1);
-	glBegin (GL_QUADS);
-	glTexCoord2f (0.0f, 0.0f);							glVertex2f (0.0f, 1.0f);
-	glTexCoord2f ((GLfloat) width, 0.0f);				glVertex2f (1.0f, 1.0f);
-	glTexCoord2f ((GLfloat) width, (GLfloat) height);	glVertex2f (1.0f, 0.0f);
-	glTexCoord2f (0.0f, (GLfloat) height);				glVertex2f (0.0f, 0.0f);
-	glEnd ();
-
-	glPopMatrix ();
-}
-void sdl_matrix_canvas_window(int width, int height) {
-	msfoof *m = &WJHH.raees.mtrx; char grown = 0;
-
-	// if size is bigger than prev size, grow, else shrink without free
-	if (!sdl_buffer || width*height > sdl_buffer_size) {
-		if (sdl_buffer) free(sdl_buffer);
-		sdl_buffer = malloc(4 * width * height * sizeof (u_char));
-		if (!sdl_buffer) { printf ("couldn't allocate sdl_buffer\n"); exit(EXIT_FAILURE); }
-		sdl_buffer_size = width*height;
-		grown = 1;
-	}
-
-	m->w = width;
-	m->h = height;
-	m->stride = width * 4;
-
-	if (grown) { // this check makes resizing much faster!
-		m->barzax = (u_int *) sdl_buffer;
-		msfoof_clear(m, 0); // TODO switch matrix to u_char *, or it doesn't work directly with cairo
-	}
-	
-	WJHH.raees.zaahir = 1;
-
-	sdl_resize_handler (width, height, &texture_id);
-}
 void sdl_emit_event(int name, int key, int value) {
 	waaqi3ah w = { 0 };
 	w.ism = name; w.miftaah = key; w.qadr = value;
 	if (sdl_composer_event_handler) sdl_composer_event_handler(&w, NULL);
 }
-int sdl_key_to_composer(int k) {
+void sdl_render(SDL_Window *sdl_window) { // TODO efficiency
+	if (XATAA) printf("render\n");
+	sdl_emit_event(RAEES, INSHA, 1);
+
+	if (ENABLE_NUK) nuk_render();
+	SDL_GL_SwapWindow(sdl_window); // Display the result
+}
+void sdl_matrix_canvas_window(int width, int height) {
+	if (XATAA) printf("matrix_canvas_window\n");
+	msfoof *m = &WJHH.raees.mtrx;
+
+	// these are used by composer for reporting window props to dukjs
+	m->w = width;
+	m->h = height;
+	m->stride = width * 4;
+	WJHH.raees.zaahir = 1;
+	WJHH.raees.mutadarrar = 1;
+}
+int  sdl_key_to_composer(int k) {
 	int b = k;
 	s2c(SDLK_ESCAPE, KEY_ESC)
 
@@ -167,12 +119,14 @@ int sdl_key_to_composer(int k) {
 
 	return b;
 }
-int  sdl_event_handler(void* data, SDL_Event* e) {
+int  sdl_event_handler(void *data, SDL_Event *e) {
+	if (XATAA) printf("event handler\n");
 	waaqi3ah w = { 0 }; char yes = 0;
 	wm.key = 0;
 	wm.w = 0;
 	matn_nazaf_str(wm.ism, 32);
 	matn_nazaf_str(wm.huroof, 32);
+	msfoof *m = &WJHH.raees.mtrx;
 	
 	if (e->type == SDL_TEXTINPUT) {
 		strcpy(wm.ism, e->text.text);
@@ -215,6 +169,10 @@ int  sdl_event_handler(void* data, SDL_Event* e) {
 		if (e->wheel.y < 0) wm.w =  1;
 
 		w.ism = MUDEER; w.miftaah = ISHAARAH; yes = 1;
+	} else if (e->type == SDL_DROPFILE) {
+		char *dropped_filedir = e->drop.file;
+		if (sdl_composer && sdl_composer->on_drop) sdl_composer->on_drop(dropped_filedir);
+		SDL_free(dropped_filedir);
 	} else if (e->type == SDL_MOUSEMOTION) {
 		wm.x = e->motion.x;
 		wm.y = e->motion.y;
@@ -222,80 +180,156 @@ int  sdl_event_handler(void* data, SDL_Event* e) {
 		wm.state = 0;
 
 		w.ism = MUDEER; w.miftaah = ISHAARAH; yes = 1;
+	} else if (e->type == SDL_FINGERMOTION || e->type == SDL_FINGERDOWN || e->type == SDL_FINGERUP) {
+		wm.x = e->tfinger.x * m->w;
+		wm.y = e->tfinger.y * m->h;
+		wm.w = e->tfinger.fingerId;
+		wm.wx = e->tfinger.dx * m->w;
+		wm.wy = e->tfinger.dy * m->h;
+		
+		w.ism = MUDEER; w.miftaah = LAMSAH; yes = 1;
+	} else if (e->type == SDL_MULTIGESTURE) {
+		// TODO make a session out of these, like lock it b/w lifts
+		if ( fabs( e->mgesture.dTheta ) > 3.14 / (360*2) ) { // rotation
+			wm.x = e->mgesture.x * m->w;
+			wm.y = e->mgesture.y * m->h;
+			wm.w = e->mgesture.dTheta;
+
+			w.ism = MUDEER; w.miftaah = ROTATE; yes = 1;
+		}
+		else if ( fabs( e->mgesture.dDist ) ) { // pinch
+			wm.x = e->mgesture.x * m->w;
+			wm.y = e->mgesture.y * m->h;
+			wm.w = e->mgesture.dDist;
+			if ( wm.w > 0 ) { // open
+				wm.state = 1;
+			} else { // close
+				wm.state = -1;
+			}
+			w.ism = MUDEER; w.miftaah = PINCH; yes = 1;
+		}
 	} else if (e->type == SDL_WINDOWEVENT && e->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
-		WJHH.raees.zaahir = 1;
+//		WJHH.raees.zaahir = 1;
 		
 		w.ism = MUDEER; w.miftaah = RAKKAZ; w.qadr = 1; yes = 1;
 	} else if (e->type == SDL_WINDOWEVENT && e->window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-		WJHH.raees.zaahir = 0;
+//		WJHH.raees.zaahir = 0;
 
 		w.ism = MUDEER; w.miftaah = RAKKAZ; w.qadr = 0; yes = 1;
 	} else if (e->type == SDL_WINDOWEVENT && e->window.event == SDL_WINDOWEVENT_RESIZED) {
 		sdl_matrix_canvas_window(e->window.data1, e->window.data2);
 		
 		w.ism = RAEES; w.miftaah = MST3D; w.qadr = 1; yes = 1;
-	} else if (WJHH.raees.zaahir) {
-		w.ism = RAEES; w.miftaah = INSHA; yes = 1;
 	}
 
 	if (yes && sdl_composer_event_handler) sdl_composer_event_handler(&w, &wm);
 }
-void sdl_render(SDL_Window* sdl_window) { // TODO efficiency
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	sdl_emit_event(RAEES, INSHA, 1);
-	sdl_draw_texture(WJHH.raees.mtrx.w, WJHH.raees.mtrx.h, sdl_buffer, texture_id);
-	SDL_GL_SwapWindow(sdl_window); // Display the result
-}
-void sdl_main_loop(SDL_Window* sdl_window) {
+void sdl_main_loop(SDL_Window *sdl_window) {
 	while (true) {
+		if (ENABLE_NUK) nuk_input_start();
 		SDL_Event ev;
-		while (SDL_PollEvent(&ev)) if (ev.type == SDL_QUIT) return;
-		
-		sdl_render(sdl_window);
+		while (SDL_PollEvent(&ev)) {
+			if (ev.type == SDL_QUIT) {
+				sdl_composer_bridge_destroy();
+				return;
+			}
+			if (ENABLE_NUK) nuk_input_event(&ev);
+		}
+		if (ENABLE_NUK) nuk_input_end();
 
-		SDL_Delay(10); // try to get a redraw-rate of 50 Hz
+		if (sdl_composer && sdl_composer->on_tick) sdl_composer->on_tick();
+		if (WJHH.raees.mutadarrar) sdl_render(sdl_window);
+
+		SDL_Delay( frame_delay ); // try to get a redraw-rate of 50 Hz
 	}
 }
-void sdl_init_gl(SDL_Window *sdl_window) {
-	if (SDL_GL_CreateContext(sdl_window) == NULL) { printf("Error: SDL_GL_CreateContext: %s\n", SDL_GetError()); exit(EXIT_FAILURE); }
+char sdl_destroy_gl() {
+	if (sdl_window == NULL || glContext == NULL) return 0;
+	
+	if (ENABLE_NUK) nuk_destroy();
+	SDL_GL_DeleteContext(glContext);
+	glContext = NULL;
+	gl_loaded = 0;
+	
+	return 1;
+}
+char sdl_init_gl() {
+	if (gl_loaded) return 1;
+	if (glContext != NULL) return 1; // already init'd
+	if (sdl_window == NULL) return 0;
+	
+	if (XATAA) printf("init gl\n");
+	
+    glContext = SDL_GL_CreateContext(sdl_window);
+	if (glContext == NULL) { printf("Error: SDL_GL_CreateContext: %s\n", SDL_GetError()); exit(EXIT_FAILURE); }
+	gl_loaded = 1;
 
 	GLenum glew_status = glewInit();
+    glewExperimental = 1;
 	if (glew_status != GLEW_OK) { printf("Error: glewInit: %s\n", glewGetErrorString(glew_status)); exit(EXIT_FAILURE); }
 
-	glEnable(GL_BLEND); // Enable alpha
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_RECTANGLE_ARB);
+	if (ENABLE_NUK) nuk_start(sdl_window);
+	
+	return 1;
+}
+void sdl_set_frame_rate(int fps) {
+	if (fps < 1) fps = 1;
+	if (fps > 120) fps = 120;
+	frame_rate = fps;
+	frame_delay = (float) 1000 / fps;
+}
+int sdl_get_frame_rate() {
+	return frame_rate;
+}
+void sdl_set_title(const u_char *s) {
+	if (sdl_window) SDL_SetWindowTitle(sdl_window, s);
 }
 void sdl_set_window(u_char *name) {
-	int width = 240*2.5, height = 320*2.5;
+	if (XATAA) printf("set window\n");
+	int width = 240*3, height = 320*2.5;
 	
-	SDL_Init(SDL_INIT_VIDEO);
-	sdl_window = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-			width, height, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+    SDL_Init(SDL_INIT_VIDEO);
+
+//	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+//	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+//	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 8);
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
+	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 5 );
+//	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES );
+//	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
+
+	sdl_window = SDL_CreateWindow( name,
+			100, 100,
+//			SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+			width, height,
+			SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL
+		);
 
 	if (sdl_window == NULL) { printf("Error: can't create sdl_window: %s\n", SDL_GetError()); exit(EXIT_FAILURE); }
 
-    SDL_AddEventWatch(sdl_event_handler, sdl_window);
-	
+	SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
+	SDL_AddEventWatch(sdl_event_handler, sdl_window);
+
 	sdl_init_gl(sdl_window);
+	
 	sdl_matrix_canvas_window(width, height);
 }
 void sdl_set_event_provider( int (*onwaaqi3ah)() ) {
+	if (XATAA) printf("set_event_provider\n");
 	sdl_composer_event_handler = onwaaqi3ah;
-
 	sdl_emit_event(RAEES, MST3D, 1);
-
 	sdl_main_loop(sdl_window);
 }
 void sdl_composer_bridge(composer *cmpsr) {
 	// app.dukjs will provide this to sdl
+	sdl_composer = cmpsr;
+	cmpsr->title = &sdl_set_title;
 	cmpsr->set_window = &sdl_set_window;
 	cmpsr->event_provider = &sdl_set_event_provider;
 }
-void sdl_composer_destroy() { // TODO tie into cmpsr.on_destroy
-	glDeleteTextures (1, &texture_id);
-	if (sdl_buffer) { free(sdl_buffer); sdl_buffer = NULL; }
+void sdl_composer_bridge_destroy() {
+	sdl_composer = NULL;
+	sdl_destroy_gl();
 }
 
 

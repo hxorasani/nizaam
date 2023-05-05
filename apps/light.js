@@ -72,12 +72,12 @@ hooks.set('scene.draw', function (o, selected) { if (o.type == LIGHT) {
 	canvas.save();
 	var s = o.get('location');
 	s = sgl.to_screen(s.x, s.y, 0);
-	var r = o.get('power')*scene.zoom;
+	var r = o.get('power')*camera.zoom;
 
 	if (selected) canvas.lwn.apply(null, c_dwhite);
 	else canvas.lwn.apply(null, o.hover ? c_lsilver : c_silver);
 
-	canvas.line_width(1*scene.zoom);
+	canvas.line_width(1*camera.zoom);
 	
 	canvas.circle(s.x, s.y, r/2, 0, 360);
 	canvas.fill();
@@ -93,7 +93,7 @@ hooks.set('scene.draw', function (o, selected) { if (o.type == LIGHT) {
 	canvas.stroke();
 
 	canvas.set_dash(5, 1, 5);
-	canvas.circle(s.x, s.y, o.get('length')*scene.zoom, 0, 360);
+	canvas.circle(s.x, s.y, o.get('length')*camera.zoom, 0, 360);
 	canvas.lwn.apply(null, c_silver);
 	canvas.stroke();
 

@@ -69,7 +69,7 @@ var transform_or_pose_or_raw = function (o, prop) {
 	return o.transform || o.pose || o;
 };
 var circles2poly = function (o, s, e) {
-	var size = transform_or_pose_or_raw(o).size*(scene.zoom/3)+2;
+	var size = transform_or_pose_or_raw(o).size*(camera.zoom/3)+2;
 	var ang = matrix.coord2angle(s.x, s.y, e.x, e.y);
 	var aa = matrix.angle2coord(s.x, s.y, size, ang+90);
 	var bb = matrix.angle2coord(s.x, s.y, size, ang-90);
@@ -236,7 +236,7 @@ var circles2poly = function (o, s, e) {
 			var m = o.mesh = mesh(o.name, shallowcopy(o.location));
 			m.no_info = 1;
 			m.on_select = function () {
-				scene.select(o.uid);
+				scene.select(o.guid);
 				return 1;
 			};
 			m.add_cube(o.size+5)
@@ -340,7 +340,7 @@ hooks.set('scene.draw', function (o, selected) { if (o.type == BONE) {
 //	canvas.fill(1);
 	canvas.stroke();
 
-//	canvas.circle(s.x, s.y, transform_or_pose_or_raw(o, 'size')*(scene.zoom/3)+3, 0, 360);
+//	canvas.circle(s.x, s.y, transform_or_pose_or_raw(o, 'size')*(camera.zoom/3)+3, 0, 360);
 //	canvas.lwn.apply(null, clr);
 //	canvas.stroke();
 

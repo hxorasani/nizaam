@@ -1,23 +1,19 @@
-# these are flags or arguments that'll be passed to the C compiler
 # -Wall is for almost all warning the cc compiler can give you
 # -g is for debugging
-#CFLAGS = -O0 -g
-#LDFLAGS = -Wall
-
+# -c means don't run the linker
 # use $< infront of the last path with gcc to send the arguments to the back (?)
 
-CFLAGS += `pkg-config --cflags libdrm`
-LDFLAGS += `pkg-config --libs libdrm`
-LDLIBS += `pkg-config --libs libdrm`
-PULSELIBS += `pkg-config --cflags --libs libpulse-simple`
-CAIROLIBS += `pkg-config --cflags --libs cairo` -lts
-AMR = src/matn.c src/alwaan.c src/utf8.c src/array.c src/helper.c src/msfoof.c src/amr.c
+CC=gcc
+
+AMR = src/map.c src/naett.c src/matn.c src/alwaan.c src/utf8.c \
+	  src/array.c src/helper.c src/msfoof.c src/amr.c src/ttf2mesh.c \
+	  src/common.c src/shader.c
+AUD = src/miniaudio.c
 MLF = src/tarmeez.c src/malaf.c
 KTB = src/canvas.c src/tarmeez.c src/eqonah.c src/xat.c src/malaf.c src/kaatib.c
 CMPSR = src/composer.c
-CAIJPGFLAGS = `pkg-config libjpeg --cflags --libs`
 FTFLAGS += `pkg-config --cflags freetype2` -lfreetype
-FLAGS = -Iinclude -Llib -lrt -lm
+FLAGS = -lrt -lm
 INCLIB = -Iinclude -Llib
 
 all: xidmaat
@@ -35,24 +31,28 @@ maxraj:
 freetype:
 	gcc -g -o bin/freetype $(AMR) $(KTB) src/freetype.c $(FLAGS)
 
-s3l-test:
-	gcc -g -o bin/s3l-test $(AMR) $(KTB) src/s3l-test.c $(FLAGS)
-
-pulse:
-	gcc -o bin/pulse $(AMR) $(KTB) src/pulse.c $(FLAGS) $(PULSELIBS)
-
-sox2:
-	gcc -o bin/sox2 src/sox2.c -lsox -lm
-
 svg:
 	gcc -Wall -g -O2 -o bin/svg src/svg.c `pkg-config --cflags --libs librsvg-2.0`
 
 soundio:
 	gcc -Wall -g -O2 -o bin/soundio src/soundio.c -lm -lsoundio
 
-app.dukjs:
-	gcc -g -o bin/app.dukjs src/sdl.c `pkg-config --libs --cflags sdl2` -lGL -lm -lGLEW \
-	$(AMR) $(KTB) $(CMPSR) src/app.dukjs.c -lduktape $(CAIROLIBS) $(FLAGS)
+nizaam:
+#	feed the linker a comma-sep list of include dirs
+	gcc -pthread -o bin/nizaam src/app.dukjs.c src/sgl.c src/sdl.c src/nuk.c \
+	src/ttf.c src/aud.c src/asio.c src/codec.c \
+	`pkg-config --libs --cflags sdl2` -lGL -lm -lGLEW -lGLU \
+	-Wl,-rpath=$(CURDIR)/lib \
+	$(INCLIB) $(MLF) $(CMPSR) -lduv -ldschema -luv -lamr -laud -lcurl -lduktape $(FLAGS)
+
+aud.so: $(AUD:.c=.o)
+	gcc -shared -o lib/libaud.so build/*
+
+amr.so: $(AMR:.c=.o)
+	gcc -shared -o lib/libamr.so build/*
+
+src/%.o: src/%.c
+	$(CC) -fPIC -c -o build/$*.o $<
 
 duktape-install:
 	cd src/duktape-2.7.0
@@ -81,51 +81,25 @@ weston-client-egl:
 
 drm:
 	rm -f bin/drm
-	gcc -o bin/drm src/drm.c $< $(CFLAGS) $(LDFLAGS) $(LDLIBS)
+	gcc -o bin/drm src/drm.c $< `pkg-config --libs --flags libdrm`
 
 madxal:
 	rm -f bin/madxal
 	gcc -o bin/madxal $(AMR) src/malaf.c src/masaadir.c \
 	src/madxal.c $(FLAGS)
 
+test:
+	gcc -o bin/test src/test.c
+
+threads:
+	gcc -fno-strict-aliasing -g -pthread -o bin/threads src/threads.c $(INCLIB) -luv
+
 masaadir:
 	rm -f bin/masaadir
 	gcc -o bin/masaadir src/masaadir.c
-
-array-test:
-	rm -f bin/array-test
-	gcc -o bin/array-test src/array-test.c
-
-inotify:
-	rm -f bin/inotify
-	gcc -o bin/inotify src/inotify.c
 
 x11:
 	rm -f bin/x11
 	gcc -pthread -o bin/x11 $(AMR) src/malaf.c src/tarmeez.c src/eqonah.c \
 	src/xat.c src/x11.c \
 	-lX11 -lrt -lm -lXext $(FTFLAGS)
-
-xtest:
-	rm -f bin/xtest
-	gcc -pthread -o bin/xtest $(AMR) src/malaf.c src/tarmeez.c src/eqonah.c \
-	src/xat.c src/nabad.c src/xtest.c \
-	-lX11 -lrt -lm -lXext
-
-xat-hur:
-	clear
-	rm -f bin/xat
-	gcc -o bin/xat src/alwaan.c src/helper.c src/matn.c \
-	src/msfoof.c src/malaf.c src/utf8.c src/tarmeez.c src/eqonah.c src/xat.c \
-	src/xat-hur.c $(FLAGS)
-
-msfoof-test:
-	clear
-	gcc -g -o bin/msfoof-test $(AMR) src/msfoof-test.c $(FLAGS)
-
-cairo-fb:
-	gcc -o bin/cairo-fb src/cairo-fb.c $(FLAGS) $(CAIROLIBS)
-
-cairo-test:
-	gcc lib/cairo_jpg.o \
-		-o bin/cairo-test $(AMR) $(KTB) src/cairo-test.c $(CAIROLIBS) $(FLAGS) $(CAIJPGFLAGS)

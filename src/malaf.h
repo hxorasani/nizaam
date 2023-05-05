@@ -14,6 +14,7 @@
 #include <fcntl.h>		// open O_RDWR
 #include <dirent.h>		// scandir
 
+#include "uv.h"			// async io
 #include "helper.h"		// helper_stringify
 
 /* i had casted barzax to unsigned char earlier which was a mistake
@@ -40,12 +41,14 @@ typedef struct {
 } files_list_t;
 int files_list(const char *path, files_list_t *list);
 void files_list_free(files_list_t *list);
+off_t files_size(const char *);
+
 
 int malaf_ilaa_matn(malaf *mlf, u_char **barzax, long *length);
 void malaf_destroy(malaf *m);
 // TODO
 int malaf_inzar(char *path);
-int malaf_hfiz(malaf *m, char *path);
-int malaf_init(malaf *m, char *path);
+int malaf_hfiz(malaf *m, const char *path);
+int malaf_init(malaf *m, const char *path);
 
 #endif

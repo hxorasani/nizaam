@@ -55,6 +55,9 @@ extern int WIJHAHHAAJA;
         AMR(ISHAARAH)		\
         AMR(TABA3)			\
         AMR(LAMSAH)			\
+        AMR(ROTATE)			\
+        AMR(PINCH)			\
+        AMR(DROP)			\
 
 #define GENERATE_ENUM(ENUM) ENUM,
 #define GENERATE_STRING(STRING) #STRING,

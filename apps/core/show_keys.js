@@ -11,11 +11,18 @@ var show_keys;
 			if (keyboard.ctrl) str += 'ctrl ';
 			if (keyboard.alt) str += 'alt ';
 			if (k) str += k+' ';
+			var m = mouse;
+			var camera = get_active_camera();
+			if (camera) v3.precision( m = v3(two_dee_cam.project(mouse.x, mouse.y)), 2 );
 			if (mouse.x) str += 'x'+mouse.x+' ';
 			if (mouse.y) str += 'y'+mouse.y+' ';
-			text(0, 0, str);
+			if (m.x) str += '(x'+m.x+') ';
+			if (m.y) str += '(y'+m.y+') ';
+			if (m.z) str += '(z'+m.z+') ';
+			text(5, 2, str);
 		},
 		pointer: function (m) {
+			v3.precision(m, 1);
 			mouse = m;
 			return 1;
 		},

@@ -15,7 +15,7 @@ typedef struct utf8 {
 } utf8;
 
 int uni2chars(char *dest, int uni, int size);
-int unis2chars(char *dest, int *uni, int size);
+char *unis2chars(int *uni);
 int chars2unis(int *dest, char *uni, int size);
 void utf8_nazzaf( utf8 *u );
 void utf8_clean( utf8 *u );

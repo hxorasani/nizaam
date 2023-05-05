@@ -11,8 +11,12 @@ int uni2chars(char *dest, int uni, int size) { // unicode int to multibyte chars
 	int src[2] = { uni, '\0' };
 	return wcstombs(dest, src, size);
 }
-int unis2chars(char *dest, int *uni, int size) { // unicode ints to multibyte chars
-	return wcstombs(dest, uni, size);
+char *unis2chars(int *uni) { // unicode ints to multibyte chars
+	int size = wcstombs(NULL, uni, 0)+1;
+	char *dest = calloc(size, sizeof(char));
+	if (dest == NULL) { perror("unis2chars calloc"); exit(EXIT_FAILURE); }
+	wcstombs(dest, uni, size);
+	return dest;
 }
 int chars2unis(int *dest, char *uni, int size) { // multibyte chars to unicode ints
 	return mbstowcs(dest, uni, size);

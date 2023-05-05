@@ -1,3 +1,5 @@
+#include "uv.h"
+#include <assert.h>
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
@@ -6,127 +8,76 @@
 #include <errno.h>
 #include <ctype.h>
 
-#define handle_error_en(en, msg) \
-        do { errno = en; perror(msg); exit(EXIT_FAILURE); } while (0)
+static uv_loop_t* uv_loop;
+char *buffer = NULL;
 
-#define handle_error(msg) \
-        do { perror(msg); exit(EXIT_FAILURE); } while (0)
+uv_fs_t open_req = {0};
+uv_fs_t stat_req = {0};
+uv_fs_t read_req = {0};
+uv_fs_t write_req= {0};
+uv_buf_t iov = {0};
 
-struct thread_info {    /* Used as argument to thread_start() */
-    pthread_t thread_id;        /* ID returned by pthread_create() */
-    int       thread_num;       /* Application-defined thread # */
-    char     *argv_string;      /* From command-line argument */
-};
-
-/* Thread start function: display address near top of our stack,
-   and return upper-cased copy of argv_string */
-
-int wow = 0;
-void dosomething(int minor) {
-	printf("dosomething %d\n", minor);
-	++wow;
+void on_read(uv_fs_t *req) {
+	if (req->result < 0) {
+		fprintf(stderr, "Read error: %s\n", uv_strerror(req->result));
+	} else if (req->result == 0) {
+		uv_fs_t close_req;
+		// synchronous
+		uv_fs_close(uv_loop, &close_req, open_req.result, NULL);
+		uv_fs_req_cleanup(&read_req);
+	} else if (req->result > 0) {
+		iov.len = req->result;
+	}
 }
-static void * thread_start(void *arg) {
-    struct thread_info *tinfo = arg;
-    char *uargv, *p;
-
-    printf("Thread %d: top of stack near %p; argv_string=%s\n",
-            tinfo->thread_num, &p, tinfo->argv_string);
-
-    uargv = strdup(tinfo->argv_string);
-    if (uargv == NULL)
-        handle_error("strdup");
-
-    for (p = uargv; *p != '\0'; p++)
-        *p = toupper(*p);
-	
-	dosomething(tinfo->thread_num);
-
-	int time = tinfo->thread_num;
-	sleep(time);
-	printf("thread %d, time %d\n", tinfo->thread_num, time);
-
-    return uargv;
+void on_stat(uv_fs_t *req) {
+	if (req->result < 0) {
+		fprintf(stderr, "Stat error: %s\n", uv_strerror((int)req->result));
+	} else {
+		uv_stat_t stats = req->statbuf;
+		buffer = malloc(stats.st_size);
+		if (buffer == NULL) { perror("uv stat malloc"); exit(EXIT_FAILURE); }
+		iov = uv_buf_init(buffer, stats.st_size);
+		//int uv_fs_read(uv_loop_t* loop, uv_fs_t* req, uv_file file, const uv_buf_t bufs[], unsigned int nbufs, int64_t offset, uv_fs_cb cb);
+		uv_fs_read(uv_loop, &read_req, open_req.result, &iov, 1, -1, on_read);
+	}
+	uv_fs_req_cleanup(&stat_req);
 }
-int main(int argc, char *argv[]) {
-    int s, tnum, opt, num_threads;
-    struct thread_info *tinfo;
-    pthread_attr_t attr;
-    int stack_size;
-    void *res;
+void on_write(uv_fs_t *req) {
+	if (req->result < 0) {
+		fprintf(stderr, "Write error: %s\n", uv_strerror((int)req->result));
+	} else {
+		uv_fs_read(uv_loop, &read_req, open_req.result, &iov, 1, -1, on_read);
+	}
+	uv_fs_req_cleanup(&write_req);
+}
+void on_open(uv_fs_t *req) {
+	// The request passed to the callback is the same as the one the call setup
+	// function was passed.
+	assert(req == &open_req);
+	if (req->result >= 0) {
+		uv_fs_fstat(uv_loop, &stat_req, req->result, on_stat);
+	} else {
+		fprintf(stderr, "error opening file: %s\n", uv_strerror((int)req->result));
+	}
+	uv_fs_req_cleanup(&open_req);
+}
 
-    /* The "-s" option specifies a stack size for our threads */
+void get_file(const char *path) {
+	open_req = (uv_fs_t) {0};
+	stat_req = (uv_fs_t) {0};
+	read_req = (uv_fs_t) {0};
+	write_req= (uv_fs_t) {0};
+	iov = (uv_buf_t) {0};
+	uv_fs_open(uv_loop, &open_req, path, O_RDONLY, 0, on_open);
+}
 
-    stack_size = -1;
-    while ((opt = getopt(argc, argv, "s:")) != -1) {
-        switch (opt) {
-        case 's':
-            stack_size = strtoul(optarg, NULL, 0);
-            break;
+int main(int argc, char **argv) {
+	uv_loop = uv_default_loop();
+	get_file("TODO.md");
+//	get_file("README.md");
+	uv_run(uv_loop, UV_RUN_DEFAULT);
+	printf("%ld\n", strlen(buffer));
+//	if (buffer) free(buffer);
 
-        default:
-            fprintf(stderr, "Usage: %s [-s stack-size] arg...\n",
-                    argv[0]);
-            exit(EXIT_FAILURE);
-        }
-    }
-
-    num_threads = argc - optind;
-
-    /* Initialize thread creation attributes */
-
-    s = pthread_attr_init(&attr);
-    if (s != 0)
-        handle_error_en(s, "pthread_attr_init");
-
-    if (stack_size > 0) {
-        s = pthread_attr_setstacksize(&attr, stack_size);
-        if (s != 0)
-            handle_error_en(s, "pthread_attr_setstacksize");
-    }
-
-    /* Allocate memory for pthread_create() arguments */
-
-    tinfo = calloc(num_threads, sizeof(struct thread_info));
-    if (tinfo == NULL)
-        handle_error("calloc");
-
-    /* Create one thread for each command-line argument */
-
-    for (tnum = 0; tnum < num_threads; tnum++) {
-        tinfo[tnum].thread_num = tnum + 1;
-        tinfo[tnum].argv_string = argv[optind + tnum];
-
-        /* The pthread_create() call stores the thread ID into
-           corresponding element of tinfo[] */
-
-        s = pthread_create(&tinfo[tnum].thread_id, &attr,
-                           &thread_start, &tinfo[tnum]);
-        if (s != 0)
-            handle_error_en(s, "pthread_create");
-    }
-
-    /* Destroy the thread attributes object, since it is no
-       longer needed */
-
-    s = pthread_attr_destroy(&attr);
-    if (s != 0)
-        handle_error_en(s, "pthread_attr_destroy");
-
-    /* Now join with each thread, and display its returned value */
-
-    for (tnum = 0; tnum < num_threads; tnum++) {
-        s = pthread_join(tinfo[tnum].thread_id, &res);
-        if (s != 0)
-            handle_error_en(s, "pthread_join");
-
-        printf("Joined with thread %d; returned value was %s\n",
-                tinfo[tnum].thread_num, (char *) res);
-        free(res);      /* Free memory allocated by thread */
-    }
-	
-	printf("wow %d\n", wow);
-
-    free(tinfo);
-    exit(EXIT_SUCCESS);
+	return 0;
 }

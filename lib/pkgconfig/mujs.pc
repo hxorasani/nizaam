@@ -1,6 +1,0 @@
-Name: mujs
-Description: MuJS embeddable Javascript interpreter
-Version: 1.3.2
-Cflags: -I/media/nano/projects/nizaam/lib/mujs-1.3.2/include
-Libs: -L/media/nano/projects/nizaam/lib/mujs-1.3.2/lib -lmujs
-Libs.private: -lm

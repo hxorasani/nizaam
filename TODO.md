@@ -2,8 +2,8 @@
 
 * rearrange src/, group files into subfolders and put readme/todo files in them
 * port mudeer+slang to nizaam:tarkeeb
-	* views, softkeys etc would be really helpful
-	* eventually video+audio tags can be supported!
+	* views, softkeys etc would be really helpful اللّه
+	* eventually video+audio tags can be supported! سانه رائع جدًا
 * calc text extents and wordwrap text
 	* then make it efficient
 	* then port kaatib to cairo

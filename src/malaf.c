@@ -50,7 +50,7 @@ void malaf_destroy(malaf *m) {
 		}
 	}
 }
-int malaf_hfiz(malaf *m, char *path) {
+int malaf_hfiz(malaf *m, const char *path) {
 	if (path != NULL && m != NULL) {
 		XATAA && printf("malaf_hfiz %s\n", path);
 		m->fd = open(path, O_CREAT | O_WRONLY);
@@ -114,19 +114,26 @@ void files_list_free(files_list_t *list) {
 		list->files = NULL; // hint that it is freed
 	}
 }
-int malaf_init(malaf *m, char *path) {
+off_t files_size(const char *pathname) {
+	struct stat s = { 0 };
+	if ( stat(pathname, &s) == -1 ) {
+		perror("files_size");
+	}
+	return s.st_size;
+}
+int malaf_init(malaf *m, const char *path) {
 	// you can omit the path and specify m->length to malloc barzax
 	if (path != NULL) {
 		m->fd = open(path, O_RDONLY);
 		if (m->fd == -1) {
 			printf("malaf_init %s %s\n", strerror(errno), path);
-			return EXIT_FAILURE;
+			return 0;
 		}
 		
 		struct stat s;
 		if (fstat(m->fd, &s) == -1) {
 			printf("malaf_init %s %p\n", strerror(errno), path);
-			return EXIT_FAILURE;
+			return 0;
 		}
 		
 		m->length = s.st_size;
@@ -137,7 +144,7 @@ int malaf_init(malaf *m, char *path) {
 	/* EXPLAIN
 	 * +1 for the nul char, prolly needed to avoid pointer smashing
 	 * mbstowcs was reporting invalid read of size 1 without this
-	 * it's not counted in length, because it is not need for functions that
+	 * it's not counted in length, because it is not needed for functions that
 	 * also take a length argument
 	 * */
 	m->barzax = (void *) malloc(m->length * (sizeof(u_char)+1) );
@@ -148,7 +155,7 @@ int malaf_init(malaf *m, char *path) {
 
 	if (path != NULL) {
 		if (read(m->fd, m->barzax, m->length) == -1) {
-			printf("malaf_init %s\n", strerror(errno)); return EXIT_FAILURE;
+			printf("malaf_init %s\n", strerror(errno)); return 0;
 		}
 	}
 
@@ -156,5 +163,5 @@ int malaf_init(malaf *m, char *path) {
 	*(u_char *)(m->barzax + m->length) = '\0';
 //	printf( "%d %d\n", *(u_char *)(m->barzax + m->length-1), *(u_char *)(m->barzax + m->length) );
 
-	return EXIT_SUCCESS;
+	return 1;
 }

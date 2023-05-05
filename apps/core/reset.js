@@ -31,6 +31,9 @@ isnan = function (v) {
 isnum = function (v) {
 	return typeof v == 'number' && !isnan(v) && isfinite(v);
 },
+isobj = function (v) {
+	return typeof v == 'object';
+},
 isfun = function (v) {
 	return typeof v == 'function';
 },
@@ -58,6 +61,9 @@ collapsearray = function (arr) {
 		if (!isundef(e)) arr2.push(e);
 	});
 	return arr2;
+},
+buffer2string = function (buf) {
+	return String.fromCharCode.apply(null, new Uint16Array(buf))
 },
 array2string = function (arr) { // [ 1, 2 ] -> " 1 2"
 	return ' '+arr.join(' ');
@@ -103,9 +109,5 @@ tolower = function (obj) {
 },
 toupper = function (obj) {
 	return obj.toUpperCase();
-},
-sgl2deg = function (v,l) { return parsefloat(v/512*360,l||2); },
-sgl2unit = function (v,l) { return parsefloat(v/512,l||2); },
-deg2sgl = function (v,l) { return parsefloat(v/360*512,l||2); },
-unit2sgl = function (v,l) { return parsefloat(v*512,l||2); }
+}
 ;
