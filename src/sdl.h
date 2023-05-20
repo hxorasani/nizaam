@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
+#include <sys/prctl.h>
 #include <stdbool.h>
 #include "nuk.h"
 #include "sgl.h"

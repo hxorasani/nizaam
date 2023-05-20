@@ -20,45 +20,191 @@
 #include "aud.h"
 #include "asio.h"
 #include "codec.h"
-#include "naett.h"
 
 #include <sys/prctl.h>
 
 #define XATAA 0
 
-char **environment; u_char *appname; char queuereload = 0;
+char **environment;
+u_char *appname = NULL;
+u_char *scripts_path = NULL;
+char queuereload = 0;
 int argumentcount = 0;
 char **argumentvalues = NULL;
 
 composer duk_composer;
 
-char fetch_pending = 0;
-naettReq *fetch_req = NULL; naettRes *fetch_res = NULL;
-void check_fetch_status() {
-	if (!fetch_res || !fetch_req) return;
-	if (!naettComplete(fetch_res)) return;
+typedef struct Vector3 {
+    float x;
+    float y;
+    float z;
+} Vector3;
+typedef struct Vector4 {
+    float x;
+    float y;
+    float z;
+    float w;
+} Vector4;
+typedef Vector4 Quaternion;
+typedef struct Matrix {
+    float m0, m4, m8, m12;
+    float m1, m5, m9, m13;
+    float m2, m6, m10, m14;
+    float m3, m7, m11, m15;
+} Matrix;
+Matrix MatrixIdentity(void) {
+    Matrix result = { 1.0f, 0.0f, 0.0f, 0.0f,
+                      0.0f, 1.0f, 0.0f, 0.0f,
+                      0.0f, 0.0f, 1.0f, 0.0f,
+                      0.0f, 0.0f, 0.0f, 1.0f };
 
-	int status = naettGetStatus(fetch_res);
+    return result;
+}
+Vector3 Vector3Unproject(Vector3 source, Matrix projection, Matrix view) {
+    Vector3 result = { 0 };
 
-	if (status < 0) {
-		printf("Request failed: %d\n", status);
-		fetch_pending = 0;
-		return;
+    // Calculate unprojected matrix (multiply view matrix by projection matrix) and invert it
+    Matrix matViewProj = {      // MatrixMultiply(view, projection);
+        view.m0*projection.m0 + view.m1*projection.m4 + view.m2*projection.m8 + view.m3*projection.m12,
+        view.m0*projection.m1 + view.m1*projection.m5 + view.m2*projection.m9 + view.m3*projection.m13,
+        view.m0*projection.m2 + view.m1*projection.m6 + view.m2*projection.m10 + view.m3*projection.m14,
+        view.m0*projection.m3 + view.m1*projection.m7 + view.m2*projection.m11 + view.m3*projection.m15,
+        view.m4*projection.m0 + view.m5*projection.m4 + view.m6*projection.m8 + view.m7*projection.m12,
+        view.m4*projection.m1 + view.m5*projection.m5 + view.m6*projection.m9 + view.m7*projection.m13,
+        view.m4*projection.m2 + view.m5*projection.m6 + view.m6*projection.m10 + view.m7*projection.m14,
+        view.m4*projection.m3 + view.m5*projection.m7 + view.m6*projection.m11 + view.m7*projection.m15,
+        view.m8*projection.m0 + view.m9*projection.m4 + view.m10*projection.m8 + view.m11*projection.m12,
+        view.m8*projection.m1 + view.m9*projection.m5 + view.m10*projection.m9 + view.m11*projection.m13,
+        view.m8*projection.m2 + view.m9*projection.m6 + view.m10*projection.m10 + view.m11*projection.m14,
+        view.m8*projection.m3 + view.m9*projection.m7 + view.m10*projection.m11 + view.m11*projection.m15,
+        view.m12*projection.m0 + view.m13*projection.m4 + view.m14*projection.m8 + view.m15*projection.m12,
+        view.m12*projection.m1 + view.m13*projection.m5 + view.m14*projection.m9 + view.m15*projection.m13,
+        view.m12*projection.m2 + view.m13*projection.m6 + view.m14*projection.m10 + view.m15*projection.m14,
+        view.m12*projection.m3 + view.m13*projection.m7 + view.m14*projection.m11 + view.m15*projection.m15 };
+
+    // Calculate inverted matrix -> MatrixInvert(matViewProj);
+    // Cache the matrix values (speed optimization)
+    float a00 = matViewProj.m0, a01 = matViewProj.m1, a02 = matViewProj.m2, a03 = matViewProj.m3;
+    float a10 = matViewProj.m4, a11 = matViewProj.m5, a12 = matViewProj.m6, a13 = matViewProj.m7;
+    float a20 = matViewProj.m8, a21 = matViewProj.m9, a22 = matViewProj.m10, a23 = matViewProj.m11;
+    float a30 = matViewProj.m12, a31 = matViewProj.m13, a32 = matViewProj.m14, a33 = matViewProj.m15;
+
+    float b00 = a00*a11 - a01*a10;
+    float b01 = a00*a12 - a02*a10;
+    float b02 = a00*a13 - a03*a10;
+    float b03 = a01*a12 - a02*a11;
+    float b04 = a01*a13 - a03*a11;
+    float b05 = a02*a13 - a03*a12;
+    float b06 = a20*a31 - a21*a30;
+    float b07 = a20*a32 - a22*a30;
+    float b08 = a20*a33 - a23*a30;
+    float b09 = a21*a32 - a22*a31;
+    float b10 = a21*a33 - a23*a31;
+    float b11 = a22*a33 - a23*a32;
+
+    // Calculate the invert determinant (inlined to avoid double-caching)
+    float invDet = 1.0f/(b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06);
+
+    Matrix matViewProjInv = {
+        (a11*b11 - a12*b10 + a13*b09)*invDet,
+        (-a01*b11 + a02*b10 - a03*b09)*invDet,
+        (a31*b05 - a32*b04 + a33*b03)*invDet,
+        (-a21*b05 + a22*b04 - a23*b03)*invDet,
+        (-a10*b11 + a12*b08 - a13*b07)*invDet,
+        (a00*b11 - a02*b08 + a03*b07)*invDet,
+        (-a30*b05 + a32*b02 - a33*b01)*invDet,
+        (a20*b05 - a22*b02 + a23*b01)*invDet,
+        (a10*b10 - a11*b08 + a13*b06)*invDet,
+        (-a00*b10 + a01*b08 - a03*b06)*invDet,
+        (a30*b04 - a31*b02 + a33*b00)*invDet,
+        (-a20*b04 + a21*b02 - a23*b00)*invDet,
+        (-a10*b09 + a11*b07 - a12*b06)*invDet,
+        (a00*b09 - a01*b07 + a02*b06)*invDet,
+        (-a30*b03 + a31*b01 - a32*b00)*invDet,
+        (a20*b03 - a21*b01 + a22*b00)*invDet };
+
+    // Create quaternion from source point
+    Quaternion quat = { source.x, source.y, source.z, 1.0f };
+
+    // Multiply quat point by unprojecte matrix
+    Quaternion qtransformed = {     // QuaternionTransform(quat, matViewProjInv)
+        matViewProjInv.m0*quat.x + matViewProjInv.m4*quat.y + matViewProjInv.m8*quat.z + matViewProjInv.m12*quat.w,
+        matViewProjInv.m1*quat.x + matViewProjInv.m5*quat.y + matViewProjInv.m9*quat.z + matViewProjInv.m13*quat.w,
+        matViewProjInv.m2*quat.x + matViewProjInv.m6*quat.y + matViewProjInv.m10*quat.z + matViewProjInv.m14*quat.w,
+        matViewProjInv.m3*quat.x + matViewProjInv.m7*quat.y + matViewProjInv.m11*quat.z + matViewProjInv.m15*quat.w };
+
+    // Normalized world points in vectors
+    result.x = qtransformed.x/qtransformed.w;
+    result.y = qtransformed.y/qtransformed.w;
+    result.z = qtransformed.z/qtransformed.w;
+
+    return result;
+}
+static void print_vec3(Vector3 m) {
+	printf("%.3f %.3f %.3f\n",
+		m.x, m.y, m.z
+	);
+}
+static void print_mat4(Matrix m) {
+    printf("%.3f %.3f %.3f %.3f\n", m.m0, m.m4, m.m8 , m.m12 );
+    printf("%.3f %.3f %.3f %.3f\n", m.m1, m.m5, m.m9 , m.m13 );
+    printf("%.3f %.3f %.3f %.3f\n", m.m2, m.m6, m.m10, m.m14 );
+    printf("%.3f %.3f %.3f %.3f\n", m.m3, m.m7, m.m11, m.m15 );
+}
+
+duk_ret_t raymath_unproject(duk_context *J) {
+	int n = duk_get_top(J);
+	if (n > 2) {
+		Vector3 result = {0};
+		Vector3 source = {0};
+		Matrix projection = MatrixIdentity();
+		Matrix view = MatrixIdentity();
+
+		float float3[3] = {0};
+		for (int i = 0; i < 3; ++i) {
+			duk_get_prop_index(J, 0, i);
+			float3[i] = duk_get_number(J, -1);
+			duk_pop(J);
+		}
+
+		source.x = float3[0];
+		source.y = float3[1];
+		source.z = float3[2];
+
+		float ff[16] = {0};
+		for (int i = 0; i < 16; ++i) { // proj
+			duk_get_prop_index(J, 1, i);
+			ff[i] = duk_get_number(J, -1);
+			duk_pop(J);
+		}
+		projection = (Matrix) {
+			ff[ 0], ff[ 4], ff[ 8], ff[12],
+			ff[ 1], ff[ 5], ff[ 9], ff[13],
+			ff[ 2], ff[ 6], ff[10], ff[14],
+			ff[ 3], ff[ 7], ff[11], ff[15],
+		};
+
+		for (int i = 0; i < 16; ++i) { // proj
+			duk_get_prop_index(J, 2, i);
+			ff[i] = duk_get_number(J, -1);
+			duk_pop(J);
+		}
+		view = (Matrix) {
+			ff[ 0], ff[ 4], ff[ 8], ff[12],
+			ff[ 1], ff[ 5], ff[ 9], ff[13],
+			ff[ 2], ff[ 6], ff[10], ff[14],
+			ff[ 3], ff[ 7], ff[11], ff[15],
+		};
+
+		result = Vector3Unproject(source, projection, view);
+		
+		duk_push_array(J);
+		dukjs_prop_num("0", result.x);
+		dukjs_prop_num("1", result.y);
+		dukjs_prop_num("2", result.z);
+		return 1;
 	}
-
-	int bodyLength = 0;
-	const char *body = naettGetBody(fetch_res, &bodyLength);
-	printf("Got a %d, %d bytes of type '%s':\n\n", naettGetStatus(fetch_res), bodyLength, naettGetHeader(fetch_res, "Content-Type"));
-
-	if (!if_js_function("on_response")) return;
-	duk_push_string(J, body);
-	call_js_function_with_stack("on_response", 1);
-
-	naettClose(fetch_res);
-	naettFree(fetch_req);
-	fetch_res = NULL;
-	fetch_req = NULL;
-	fetch_pending = 0;
+	return 0;
 }
 
 //{ colors
@@ -241,19 +387,6 @@ bindjs (composer_process_run) {
 	}
 	return 0;
 }
-bindjs (composer_fetch) {
-	int n = duk_get_top(J);
-	if (n && duk_get_type(J, 0) == DUK_TYPE_STRING && !fetch_pending) {
-		const char *str = duk_safe_to_string(J, 0);
-		printf("fetch %s\n", str);
-
-		fetch_req = naettRequest(str, naettMethod("GET"), naettHeader("accept", "*/*"));
-		fetch_res = naettMake(fetch_req);
-		
-		fetch_pending = 1;
-	}
-	return 0;
-}
 //}
 
 //{ ease
@@ -309,7 +442,7 @@ void on_bound_window(ihaatahf ih) {
 		duk_push_number(J, ih.w  ), duk_put_prop_string(J, obj_idx, "w");
 		duk_push_number(J, ih.h  ), duk_put_prop_string(J, obj_idx, "h");
 	}
-	duk_put_global_string(J, "window");
+	duk_put_global_string(J, "Window");
 	if (if_js_function("on_bound_window")) {
 		duk_idx_t obj_idx = duk_push_object(J);
 		{
@@ -387,7 +520,6 @@ char on_rotate(mafateeh wm) {
 	return call_js_function_with_stack("on_rotate", 1);
 }
 void on_tick() { // IMPORTANT apps misbehave without this
-	check_fetch_status();
 	asio_run();
 	if (!if_js_function("on_tick")) return;
 	call_js_function_with_stack("on_tick", 0);
@@ -466,6 +598,16 @@ duk_ret_t app_duk_js_bind(duk_context *J) {
 	duk_dup(J, -1);
 	duk_put_prop_string(J, -2, "global");
 	duk_pop(J);
+
+	msfoof *m = &WJHH.raees.mtrx;
+	duk_idx_t obj_idx = duk_push_object(J);
+	{
+		duk_push_number(J,    0  ), duk_put_prop_string(J, obj_idx, "x");
+		duk_push_number(J,    0  ), duk_put_prop_string(J, obj_idx, "y");
+		duk_push_number(J, m->w  ), duk_put_prop_string(J, obj_idx, "w");
+		duk_push_number(J, m->h  ), duk_put_prop_string(J, obj_idx, "h");
+	}
+	duk_put_global_string(J, "Window");
 	
 	aud_bind_js(J);
 	ttf_bind_js(J);
@@ -511,19 +653,31 @@ duk_ret_t app_duk_js_bind(duk_context *J) {
 	}
 	duk_put_global_string(J, "process");
 
+	duk_push_object(J); {
+		duk_push_string(J, scripts_path);
+		duk_put_prop_string(J, -2, "scripts_path");
+	}
+	duk_put_global_string(J, "Nizaam");
+
 	push_c_function_x(J, "log", composer_print);
 	push_c_function_x(J, "reload", composer_reload);
 	push_c_function_x(J, "frame_rate", composer_frame_rate);
 	push_c_function_x(J, "exit", composer_exit);
 	push_c_function_x(J, "clear", composer_console_clear);
 	push_c_function_x(J, "require", composer_require);
-	push_c_function_x(J, "fetch", composer_fetch);
+	push_c_function_x(J, "raymath_unproject", raymath_unproject);
 	return 0;
 }
 void on_reload() {
 	asio_destroy();
 	
-	if (J) { on_destroy(); duk_destroy_heap(J); }
+	if (J) {
+		on_destroy();
+		duk_push_global_object(J);
+		duk_compact(J, -1);
+		duk_pop(J);
+		duk_destroy_heap(J);
+	}
 	J = duk_create_heap(NULL, NULL, NULL, asio_loop(), duk_js_fatal);
 	if (!J) { printf("cannot create heap\n"); exit(1); }
 
@@ -550,20 +704,44 @@ void on_reload() {
 
 	app_duk_js_bind(J);
 
-	load_js_file(appname);
+	u_char *final_path = helper_stringify("%s%s", scripts_path, "scripts/main.js");
+
+	load_js_file(final_path);
+
+	free(final_path);
+}
+void nizaam_guess_scripts_path() {
+	size_t size = 2*PATH_MAX;
+	char exe_path[2*PATH_MAX];
+	uv_exepath(exe_path, &size);
+	
+	int slashes = 0, letters = 0;
+	for (int i = size; i > -1; --i) {
+		if (exe_path[i] == '\\' || exe_path[i]  == '/')
+			slashes++;
+
+		if (slashes >= 2) break;
+		letters++;
+	}
+
+	scripts_path = malloc( (size - letters + 1) * sizeof(u_char) );
+	strncpy(scripts_path, exe_path, size - letters + 1);
+	scripts_path[size - letters + 1] = '\0';
 }
 int main(int argc, char **argv, char *envp[]) {
 	if (argc >= 2) {
 		J = NULL; // just to be safe
-		prctl(PR_SET_NAME, (unsigned long) argv[1], 0, 0, 0);
+//		prctl(PR_SET_NAME, (unsigned long) argv[0], 0, 0, 0);
 
 		argumentcount = argc;
 		argumentvalues = argv;
 		environment = envp;
-		naettInit(NULL);
+
+		nizaam_guess_scripts_path();
+
 		asio_set_binder(app_duk_js_bind);
 
-		appname = helper_stringify("apps/%s.js", argv[1]);
+		appname = argv[1];
 
 		duk_composer = (composer) {
 			.ism = argv[1],
@@ -589,9 +767,9 @@ int main(int argc, char **argv, char *envp[]) {
 		composer_init(duk_composer);
 
 		if (J) duk_destroy_heap(J);
+		if (scripts_path) free(scripts_path);
 
 		composer_destroy();
-		free(appname);
 	} else {
 		printf("could not find app\n");
 	}

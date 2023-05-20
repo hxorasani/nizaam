@@ -282,6 +282,7 @@ int sdl_get_frame_rate() {
 	return frame_rate;
 }
 void sdl_set_title(const u_char *s) {
+	prctl(PR_SET_NAME, (unsigned long) s, 0, 0, 0);
 	if (sdl_window) SDL_SetWindowTitle(sdl_window, s);
 }
 void sdl_set_window(u_char *name) {

@@ -1,0 +1,9 @@
+Name: dukluv
+Description: DukTape libuv bindings
+Version: 0.1
+Requires: libuv
+prefix=/usr/local
+includedir=${prefix}/include/duv
+libdir=${prefix}/lib
+Libs: -L${libdir} -lduv -ldschema -lduktape
+Cflags: -I${includedir}

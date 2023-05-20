@@ -5,7 +5,7 @@
 
 CC=gcc
 
-AMR = src/map.c src/naett.c src/matn.c src/alwaan.c src/utf8.c \
+AMR = src/map.c src/matn.c src/alwaan.c src/utf8.c \
 	  src/array.c src/helper.c src/msfoof.c src/amr.c src/ttf2mesh.c \
 	  src/common.c src/shader.c
 AUD = src/miniaudio.c
@@ -43,13 +43,15 @@ nizaam:
 	src/ttf.c src/aud.c src/asio.c src/codec.c \
 	`pkg-config --libs --cflags sdl2` -lGL -lm -lGLEW -lGLU \
 	-Wl,-rpath=$(CURDIR)/lib \
-	$(INCLIB) $(MLF) $(CMPSR) -lduv -ldschema -luv -lamr -laud -lcurl -lduktape $(FLAGS)
+	$(INCLIB) $(MLF) $(CMPSR) -lduv -ldschema -luv -lamr -laud -lduktape $(FLAGS)
 
 aud.so: $(AUD:.c=.o)
-	gcc -shared -o lib/libaud.so build/*
+	gcc -shared -o lib/libaud.so build/*.o
+	rm -rf build/*.o
 
 amr.so: $(AMR:.c=.o)
-	gcc -shared -o lib/libamr.so build/*
+	gcc -shared -o lib/libamr.so build/*.o
+	rm -rf build/*.o
 
 src/%.o: src/%.c
 	$(CC) -fPIC -c -o build/$*.o $<
