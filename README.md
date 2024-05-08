@@ -34,9 +34,9 @@ why have another display server or protocol when there's open source alternativs
 		* be extendable but also backwards compatible
 		* barebones to the point you can feel the metal (aka hardware)
 
+## Near Future Uses
 
-
-## game
+### game
 should be built on these principles
 * tiny, the core should be few MBs at worse
 	* this includes, physics, 2d, 3d, text, photos, videos, animations, sound
@@ -53,7 +53,7 @@ should be built on these principles
 	* certain pointer or touch gestures fast enough
 
 
-## video app
+### video app
 * the target is to produce videos
 * physics should be built in
 	* gravity and each object falls
