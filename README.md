@@ -9,7 +9,7 @@ A linux-based OS for the next generation. It includes its own JS based app engin
 * should work on most hardware with the least changes
 * should work inside other OSes (android, macos, win, ...)
 * be user and developer friendly
-* be able to run Mudeer apps
+* be able to run [Mudeer](https://github.com/xorasan/mudeer) apps
 
 ## Mid Term Goals
 * **DONE** run on [X11](https://en.wikipedia.org/wiki/X_Window_System)
