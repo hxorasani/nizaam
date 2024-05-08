@@ -56,8 +56,8 @@ typedef struct {
 	void (*event_provider)( int (*onwaaqi3ah)() );
 } composer;
 
-canvas *current_canvas;
-msfoof *current_matrix;
+extern canvas *current_canvas;
+extern msfoof *current_matrix;
 
 double composer_ease_by_name(int index, double t, double b, double c, double d);
 void composer_attach(composer *t);

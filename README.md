@@ -1,6 +1,6 @@
-nizaam (arabic for: system) is an linux-based OS for the next generation.
+# nizaam (arabic for: system) is an linux-based OS for the next generation.
 
-
+[TODO](https://github.com/xorasan/nizaam/edit/master/TODO.md)
 
 project goals
 * use the latest open standards

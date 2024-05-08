@@ -12,8 +12,8 @@
 #define bindjs(n) duk_ret_t n (duk_context *J)
 #define bindjspropx(c, n) dukjs_prop_num_x(x, #n, n);
 #define bindjsprop(n) dukjs_prop_num(#n, n);
-duk_context *J;
-char canvas_open, window_open;
+extern duk_context *J;
+extern char canvas_open, window_open;
 
 //bindjs(nuk_end_canvas);
 //bindjs(nuk_end);

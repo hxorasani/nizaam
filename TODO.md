@@ -1,5 +1,6 @@
 # TODO
 
+* Unlike [Weld](https://github.com/xorasan/mudeer/tree/main/weld), this uses Duktape (a tiny js engine), it's written mainly in C, incredibly fast. My plan is to eventually write a compatibility layer for [Mudeer](https://github.com/xorasan/mudeer).
 * rearrange src/, group files into subfolders and put readme/todo files in them
 * port mudeer to nizaam as a web servermodule
 	* this would require that nizaam windows be made optional

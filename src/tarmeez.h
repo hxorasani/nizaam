@@ -21,8 +21,8 @@ typedef struct tarmeez {
 	u_char *badeel; // unicode int to char[4]
 	u_char *tofusha; // unicode int gives you fusha char
 } tarmeez;
-tarmeez fushatarmeez; // default global tarmeez
-tarmeez fusha2tarmeez; // default global tarmeez
+extern tarmeez fushatarmeez; // default global tarmeez
+extern tarmeez fusha2tarmeez; // default global tarmeez
 int tarmeez_decode(tarmeez *t, malaf *f, struct utf8 *u);
 int tarmeez_encode(tarmeez *t, char *m, int length);
 int tarmeez_core();

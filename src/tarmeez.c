@@ -5,6 +5,8 @@
 #include "tarmeez.h"	// header file
 
 #define XATAA 0
+tarmeez fushatarmeez; // default global tarmeez
+tarmeez fusha2tarmeez; // default global tarmeez
 int tarmeez_ready = 0;
 
 void tarmeez_copystr(tarmeez *t, int src[], unsigned char dest[], int len) {

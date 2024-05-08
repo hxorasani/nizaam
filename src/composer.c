@@ -7,6 +7,8 @@
 #define XATAA 0
 
 composer trkb;
+canvas *current_canvas;
+msfoof *current_matrix;
 canvas qmc = { 0 };
 
 double composer_ease_by_name(int i, double t, double b, double c, double d) {

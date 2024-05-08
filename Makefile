@@ -39,7 +39,7 @@ soundio:
 
 nizaam:
 #	feed the linker a comma-sep list of include dirs
-	gcc -pthread -o bin/nizaam src/app.dukjs.c src/sgl.c src/sdl.c src/nuk.c \
+	gcc -g -pthread -o bin/nizaam src/app.dukjs.c src/sgl.c src/sdl.c src/nuk.c \
 	src/ttf.c src/aud.c src/asio.c src/codec.c \
 	`pkg-config --libs --cflags sdl2` -lGL -lm -lGLEW -lGLU \
 	-Wl,-rpath=$(CURDIR)/lib \
