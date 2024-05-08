@@ -1,4 +1,4 @@
-# Nizaam (arabic for: System)
+# Nizaam (arabic for system)
 A linux-based OS for the next generation. It includes its own JS based app engine with 3D animation and ~~Audio~~ support.
 
 ## Long Term Goals
