@@ -1,5 +1,5 @@
-# nizaam (arabic for: system) is a linux-based OS for the next generation.
-
+# Nizaam (arabic for: System) is a linux-based OS for the next generation.
+It includes its own JS based app engine with 3D animation and ~~Audio~~ support.
 
 ## Long Term Goals
 * use the latest open standards
@@ -36,7 +36,7 @@ why have another display server or protocol when there's open source alternativs
 
 ## Near Future Uses
 
-### game
+### Games
 should be built on these principles
 * tiny, the core should be few MBs at worse
 	* this includes, physics, 2d, 3d, text, photos, videos, animations, sound
@@ -53,7 +53,7 @@ should be built on these principles
 	* certain pointer or touch gestures fast enough
 
 
-### video app
+### Smart Visualizations
 * the target is to produce videos
 * physics should be built in
 	* gravity and each object falls
@@ -78,7 +78,7 @@ should be built on these principles
 
 
 
-## helpful while development
+## Helpful While Development
 * while doing duktape shared library installs, i had to do ldconfig to cache
   the newly installed shared libs for them to be found
 
