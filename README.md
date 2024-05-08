@@ -1,5 +1,5 @@
 # Nizaam (arabic for system)
-A linux-based OS for the next generation. It includes its own JS based app engine with 3D animation and ~~Audio~~ support.
+Tiny modular JS app & game engine compatible with [Mudeer](https://github.com/xorasan/mudeer).
 
 ## Long Term Goals
 * use the latest open standards
