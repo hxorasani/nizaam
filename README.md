@@ -1,8 +1,7 @@
-# nizaam (arabic for: system) is an linux-based OS for the next generation.
+# nizaam (arabic for: system) is a linux-based OS for the next generation.
 
-[TODO](https://github.com/xorasan/nizaam/edit/master/TODO.md)
 
-project goals
+## Long Term Goals
 * use the latest open standards
 * remain minimal, in MBs and not GBs
 * any dependencies should be pre-packaged
@@ -10,10 +9,21 @@ project goals
 * should work on most hardware with the least changes
 * should work inside other OSes (android, macos, win, ...)
 * be user and developer friendly
+* be able to run Mudeer apps
+
+## Mid Term Goals
+* **DONE** run on [X11](https://en.wikipedia.org/wiki/X_Window_System)
+* **DONE** run on [Wayland](https://wayland.freedesktop.org/)
+* **TODO** run on [DRM](https://en.wikipedia.org/wiki/Direct_Rendering_Manager)
+* **TODO** implement an Audio API
+* **TODO** implement a Fonts API
+
+## Short Term Goals
+Found in [TODO](https://github.com/xorasan/nizaam/edit/master/TODO.md)
 
 
+**why have another display server or protocol when there's open source**
 
-why have another display server or protocol when there's open source
 alternativs that exist already
 * display servers
 	* X is too old
