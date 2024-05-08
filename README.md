@@ -21,10 +21,8 @@
 ## Short Term Goals
 Found in [TODO](https://github.com/xorasan/nizaam/edit/master/TODO.md)
 
-
-**why have another display server or protocol when there's open source**
-
-alternativs that exist already
+## Why
+why have another display server or protocol when there's open source alternativs that exist already
 * display servers
 	* X is too old
 	* wayland/wlroots seems good but the build system is burdensome
